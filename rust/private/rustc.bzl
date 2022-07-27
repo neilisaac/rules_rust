@@ -1043,7 +1043,7 @@ def rustc_compile_action(
         coverage_runfiles = [toolchain.llvm_cov, toolchain.llvm_profdata]
 
     runfiles = ctx.runfiles(
-        files = getattr(ctx.files, "data", []),
+        files = getattr(ctx.files, "data", []) + coverage_runfiles,
         collect_data = True,
     )
     if hasattr(ctx.attr, "crate"):

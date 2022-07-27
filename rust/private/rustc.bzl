@@ -1043,9 +1043,12 @@ def rustc_compile_action(
         coverage_runfiles = [toolchain.llvm_cov, toolchain.llvm_profdata]
 
     runfiles = ctx.runfiles(
-        files = getattr(ctx.files, "data", []) + coverage_runfiles,
+        files = getattr(ctx.files, "data", []),
         collect_data = True,
     )
+    if hasattr(ctx.attr, "crate"):
+        runfiles = runfiles.merge(ctx.attr.crate[DefaultInfo].default_runfiles)
+        runfiles = runfiles.merge(ctx.attr.crate[DefaultInfo].data_runfiles)
 
     # TODO: Remove after some resolution to
     # https://github.com/bazelbuild/rules_rust/issues/771

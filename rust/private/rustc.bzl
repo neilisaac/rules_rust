@@ -1046,7 +1046,7 @@ def rustc_compile_action(
         files = getattr(ctx.files, "data", []) + coverage_runfiles,
         collect_data = True,
     )
-    if hasattr(ctx.attr, "crate"):
+    if getattr(ctx.attr, "crate", None):
         runfiles = runfiles.merge(ctx.attr.crate[DefaultInfo].default_runfiles)
         runfiles = runfiles.merge(ctx.attr.crate[DefaultInfo].data_runfiles)
 

@@ -37,8 +37,10 @@ def _strip_crate_info_output(crate_info):
         aliases = crate_info.aliases,
         # This crate info should have no output
         output = None,
+        metadata = None,
         edition = crate_info.edition,
         rustc_env = crate_info.rustc_env,
+        rustc_env_files = crate_info.rustc_env_files,
         is_test = crate_info.is_test,
         compile_data = crate_info.compile_data,
     )
@@ -90,6 +92,8 @@ def rustdoc_compile_action(
         crate_info = crate_info,
         dep_info = dep_info,
         build_info = build_info,
+        # If this is a rustdoc test, we need to depend on rlibs rather than .rmeta.
+        force_depend_on_objects = is_test,
     )
 
     # Since this crate is not actually producing the output described by the
@@ -118,6 +122,7 @@ def rustdoc_compile_action(
         emit = [],
         remap_path_prefix = None,
         force_link = True,
+        force_depend_on_objects = is_test,
     )
 
     # Because rustdoc tests compile tests outside of the sandbox, the sysroot
@@ -321,7 +326,7 @@ rust_doc = rule(
         "rust_doc_zip": "%{name}.zip",
     },
     toolchains = [
-        str(Label("//rust:toolchain")),
+        str(Label("//rust:toolchain_type")),
         "@bazel_tools//tools/cpp:toolchain_type",
     ],
     incompatible_use_toolchain_transition = True,

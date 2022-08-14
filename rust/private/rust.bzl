@@ -13,10 +13,12 @@
 # limitations under the License.
 
 # buildifier: disable=module-docstring
+load("@bazel_skylib//lib:paths.bzl", "paths")
 load("//rust/private:common.bzl", "rust_common")
 load("//rust/private:rustc.bzl", "rustc_compile_action")
 load(
     "//rust/private:utils.bzl",
+    "can_build_metadata",
     "compute_crate_name",
     "dedent",
     "determine_output_hash",
@@ -25,7 +27,6 @@ load(
     "get_import_macro_deps",
     "transform_deps",
 )
-
 # TODO(marco): Separate each rule into its own file.
 
 def _assert_no_deprecated_attributes(_ctx):
@@ -316,6 +317,13 @@ def _rust_library_common(ctx, crate_type):
     )
     rust_lib = ctx.actions.declare_file(rust_lib_name)
 
+    rust_metadata = None
+    if can_build_metadata(toolchain, ctx, crate_type) and not ctx.attr.disable_pipelining:
+        rust_metadata = ctx.actions.declare_file(
+            paths.replace_extension(rust_lib_name, ".rmeta"),
+            sibling = rust_lib,
+        )
+
     deps = transform_deps(ctx.attr.deps)
     proc_macro_deps = transform_deps(ctx.attr.proc_macro_deps + get_import_macro_deps(ctx))
 
@@ -332,8 +340,10 @@ def _rust_library_common(ctx, crate_type):
             proc_macro_deps = depset(proc_macro_deps),
             aliases = ctx.attr.aliases,
             output = rust_lib,
+            metadata = rust_metadata,
             edition = get_edition(ctx.attr, toolchain, ctx.label),
             rustc_env = ctx.attr.rustc_env,
+            rustc_env_files = ctx.files.rustc_env_files,
             is_test = False,
             compile_data = depset(ctx.files.compile_data),
             owner = ctx.label,
@@ -378,6 +388,7 @@ def _rust_binary_impl(ctx):
             output = output,
             edition = get_edition(ctx.attr, toolchain, ctx.label),
             rustc_env = ctx.attr.rustc_env,
+            rustc_env_files = ctx.files.rustc_env_files,
             is_test = False,
             compile_data = depset(ctx.files.compile_data),
             owner = ctx.label,
@@ -422,6 +433,9 @@ def _rust_test_impl(ctx):
             compile_data = depset(ctx.files.compile_data, transitive = [crate.compile_data])
         else:
             compile_data = depset(ctx.files.compile_data)
+        rustc_env_files = ctx.files.rustc_env_files + crate.rustc_env_files
+        rustc_env = dict(crate.rustc_env)
+        rustc_env.update(**ctx.attr.rustc_env)
 
         # Build the test binary using the dependency's srcs.
         crate_info = rust_common.create_crate_info(
@@ -434,7 +448,8 @@ def _rust_test_impl(ctx):
             aliases = ctx.attr.aliases,
             output = output,
             edition = crate.edition,
-            rustc_env = ctx.attr.rustc_env,
+            rustc_env = rustc_env,
+            rustc_env_files = rustc_env_files,
             is_test = True,
             compile_data = compile_data,
             wrapped_crate_type = crate.type,
@@ -465,6 +480,7 @@ def _rust_test_impl(ctx):
             output = output,
             edition = get_edition(ctx.attr, toolchain, ctx.label),
             rustc_env = ctx.attr.rustc_env,
+            rustc_env_files = ctx.files.rustc_env_files,
             is_test = True,
             compile_data = depset(ctx.files.compile_data),
             owner = ctx.label,
@@ -707,7 +723,22 @@ _common_attrs = {
     ),
 }
 
-_rust_test_attrs = {
+_experimental_use_cc_common_link_attrs = {
+    "experimental_use_cc_common_link": attr.int(
+        doc = (
+            "Whether to use cc_common.link to link rust binaries. " +
+            "Possible values: [-1, 0, 1]. " +
+            "-1 means use the value of the toolchain.experimental_use_cc_common_link " +
+            "boolean build setting to determine. " +
+            "0 means do not use cc_common.link (use rustc instead). " +
+            "1 means use cc_common.link."
+        ),
+        values = [-1, 0, 1],
+        default = -1,
+    ),
+}
+
+_rust_test_attrs = dict({
     "crate": attr.label(
         mandatory = False,
         doc = dedent("""\
@@ -744,7 +775,7 @@ _rust_test_attrs = {
         default = Label("@bazel_tools//tools/cpp:grep-includes"),
         executable = True,
     ),
-}
+}.items() + _experimental_use_cc_common_link_attrs.items())
 
 _common_providers = [
     rust_common.crate_info,
@@ -755,11 +786,20 @@ _common_providers = [
 rust_library = rule(
     implementation = _rust_library_impl,
     provides = _common_providers,
-    attrs = dict(_common_attrs.items()),
+    attrs = dict(_common_attrs.items() + {
+        "disable_pipelining": attr.bool(
+            default = False,
+            doc = dedent("""\
+                Disables pipelining for this rule if it is globally enabled.
+                This will cause this rule to not produce a `.rmeta` file and all the dependent
+                crates will instead use the `.rlib` file.
+            """),
+        ),
+    }.items()),
     fragments = ["cpp"],
     host_fragments = ["cpp"],
     toolchains = [
-        str(Label("//rust:toolchain")),
+        str(Label("//rust:toolchain_type")),
         "@bazel_tools//tools/cpp:toolchain_type",
     ],
     incompatible_use_toolchain_transition = True,
@@ -835,7 +875,7 @@ rust_static_library = rule(
     fragments = ["cpp"],
     host_fragments = ["cpp"],
     toolchains = [
-        str(Label("//rust:toolchain")),
+        str(Label("//rust:toolchain_type")),
         "@bazel_tools//tools/cpp:toolchain_type",
     ],
     incompatible_use_toolchain_transition = True,
@@ -858,7 +898,7 @@ rust_shared_library = rule(
     fragments = ["cpp"],
     host_fragments = ["cpp"],
     toolchains = [
-        str(Label("//rust:toolchain")),
+        str(Label("//rust:toolchain_type")),
         "@bazel_tools//tools/cpp:toolchain_type",
     ],
     incompatible_use_toolchain_transition = True,
@@ -910,7 +950,7 @@ rust_proc_macro = rule(
     fragments = ["cpp"],
     host_fragments = ["cpp"],
     toolchains = [
-        str(Label("//rust:toolchain")),
+        str(Label("//rust:toolchain_type")),
         "@bazel_tools//tools/cpp:toolchain_type",
     ],
     incompatible_use_toolchain_transition = True,
@@ -919,7 +959,7 @@ rust_proc_macro = rule(
         """),
 )
 
-_rust_binary_attrs = {
+_rust_binary_attrs = dict({
     "crate_type": attr.string(
         doc = dedent("""\
             Crate type that will be passed to `rustc` to be used for building this crate.
@@ -951,7 +991,7 @@ _rust_binary_attrs = {
         default = Label("@bazel_tools//tools/cpp:grep-includes"),
         executable = True,
     ),
-}
+}.items() + _experimental_use_cc_common_link_attrs.items())
 
 rust_binary = rule(
     implementation = _rust_binary_impl,
@@ -961,7 +1001,7 @@ rust_binary = rule(
     fragments = ["cpp"],
     host_fragments = ["cpp"],
     toolchains = [
-        str(Label("//rust:toolchain")),
+        str(Label("//rust:toolchain_type")),
         "@bazel_tools//tools/cpp:toolchain_type",
     ],
     incompatible_use_toolchain_transition = True,
@@ -1089,7 +1129,7 @@ rust_binary_without_process_wrapper = rule(
     fragments = ["cpp"],
     host_fragments = ["cpp"],
     toolchains = [
-        str(Label("//rust:toolchain")),
+        str(Label("//rust:toolchain_type")),
         "@bazel_tools//tools/cpp:toolchain_type",
     ],
     incompatible_use_toolchain_transition = True,
@@ -1102,7 +1142,7 @@ rust_library_without_process_wrapper = rule(
     fragments = ["cpp"],
     host_fragments = ["cpp"],
     toolchains = [
-        str(Label("//rust:toolchain")),
+        str(Label("//rust:toolchain_type")),
         "@bazel_tools//tools/cpp:toolchain_type",
     ],
     incompatible_use_toolchain_transition = True,
@@ -1118,7 +1158,7 @@ rust_test = rule(
     host_fragments = ["cpp"],
     test = True,
     toolchains = [
-        str(Label("//rust:toolchain")),
+        str(Label("//rust:toolchain_type")),
         "@bazel_tools//tools/cpp:toolchain_type",
     ],
     incompatible_use_toolchain_transition = True,

@@ -45,7 +45,9 @@ impl Greeter {
     /// ```
     pub fn from_txt_file() -> std::io::Result<Greeter> {
         Ok(Greeter {
-            greeting: std::fs::read_to_string(runfiles::Runfiles::create()?.rlocation("rules_rust/test/rust/greeting.txt"))?
+            greeting: std::fs::read_to_string(
+                runfiles::Runfiles::create()?.rlocation("rules_rust/test/rust/greeting.txt"),
+            )?,
         })
     }
 

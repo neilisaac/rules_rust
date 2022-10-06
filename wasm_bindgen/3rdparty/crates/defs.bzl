@@ -291,18 +291,18 @@ def aliases(
 _NORMAL_DEPENDENCIES = {
     "": {
         _COMMON_CONDITION: {
-            "anyhow": "@rules_rust_wasm_bindgen__anyhow-1.0.58//:anyhow",
-            "curl": "@rules_rust_wasm_bindgen__curl-0.4.43//:curl",
+            "anyhow": "@rules_rust_wasm_bindgen__anyhow-1.0.65//:anyhow",
+            "curl": "@rules_rust_wasm_bindgen__curl-0.4.44//:curl",
             "docopt": "@rules_rust_wasm_bindgen__docopt-1.1.1//:docopt",
             "env_logger": "@rules_rust_wasm_bindgen__env_logger-0.8.4//:env_logger",
             "log": "@rules_rust_wasm_bindgen__log-0.4.17//:log",
             "rouille": "@rules_rust_wasm_bindgen__rouille-3.5.0//:rouille",
-            "serde": "@rules_rust_wasm_bindgen__serde-1.0.139//:serde",
-            "serde_json": "@rules_rust_wasm_bindgen__serde_json-1.0.82//:serde_json",
+            "serde": "@rules_rust_wasm_bindgen__serde-1.0.145//:serde",
+            "serde_json": "@rules_rust_wasm_bindgen__serde_json-1.0.85//:serde_json",
             "walrus": "@rules_rust_wasm_bindgen__walrus-0.19.0//:walrus",
-            "wasm-bindgen": "@rules_rust_wasm_bindgen__wasm-bindgen-0.2.81//:wasm_bindgen",
-            "wasm-bindgen-cli-support": "@rules_rust_wasm_bindgen__wasm-bindgen-cli-support-0.2.81//:wasm_bindgen_cli_support",
-            "wasm-bindgen-shared": "@rules_rust_wasm_bindgen__wasm-bindgen-shared-0.2.81//:wasm_bindgen_shared",
+            "wasm-bindgen": "@rules_rust_wasm_bindgen__wasm-bindgen-0.2.83//:wasm_bindgen",
+            "wasm-bindgen-cli-support": "@rules_rust_wasm_bindgen__wasm-bindgen-cli-support-0.2.83//:wasm_bindgen_cli_support",
+            "wasm-bindgen-shared": "@rules_rust_wasm_bindgen__wasm-bindgen-shared-0.2.83//:wasm_bindgen_shared",
         },
     },
 }
@@ -341,7 +341,7 @@ _NORMAL_DEV_ALIASES = {
 _PROC_MACRO_DEPENDENCIES = {
     "": {
         _COMMON_CONDITION: {
-            "serde_derive": "@rules_rust_wasm_bindgen__serde_derive-1.0.139//:serde_derive",
+            "serde_derive": "@rules_rust_wasm_bindgen__serde_derive-1.0.145//:serde_derive",
         },
     },
 }
@@ -388,15 +388,18 @@ _CONDITIONS = {
     "aarch64-uwp-windows-msvc": [],
     "cfg(all(any(target_arch = \"x86_64\", target_arch = \"aarch64\"), target_os = \"hermit\"))": [],
     "cfg(all(unix, not(target_os = \"macos\")))": ["aarch64-apple-ios", "aarch64-apple-ios-sim", "aarch64-linux-android", "aarch64-unknown-linux-gnu", "arm-unknown-linux-gnueabi", "armv7-linux-androideabi", "armv7-unknown-linux-gnueabi", "i686-linux-android", "i686-unknown-freebsd", "i686-unknown-linux-gnu", "powerpc-unknown-linux-gnu", "s390x-unknown-linux-gnu", "x86_64-apple-ios", "x86_64-linux-android", "x86_64-unknown-freebsd", "x86_64-unknown-linux-gnu"],
+    "cfg(any(target_os = \"macos\", target_os = \"ios\"))": ["aarch64-apple-darwin", "aarch64-apple-ios", "aarch64-apple-ios-sim", "i686-apple-darwin", "x86_64-apple-darwin", "x86_64-apple-ios"],
     "cfg(any(target_os = \"macos\", target_os = \"ios\", target_os = \"freebsd\"))": ["aarch64-apple-darwin", "aarch64-apple-ios", "aarch64-apple-ios-sim", "i686-apple-darwin", "i686-unknown-freebsd", "x86_64-apple-darwin", "x86_64-apple-ios", "x86_64-unknown-freebsd"],
     "cfg(any(unix, target_os = \"wasi\"))": ["aarch64-apple-darwin", "aarch64-apple-ios", "aarch64-apple-ios-sim", "aarch64-linux-android", "aarch64-unknown-linux-gnu", "arm-unknown-linux-gnueabi", "armv7-linux-androideabi", "armv7-unknown-linux-gnueabi", "i686-apple-darwin", "i686-linux-android", "i686-unknown-freebsd", "i686-unknown-linux-gnu", "powerpc-unknown-linux-gnu", "s390x-unknown-linux-gnu", "wasm32-wasi", "x86_64-apple-darwin", "x86_64-apple-ios", "x86_64-linux-android", "x86_64-unknown-freebsd", "x86_64-unknown-linux-gnu"],
     "cfg(not(windows))": ["aarch64-apple-darwin", "aarch64-apple-ios", "aarch64-apple-ios-sim", "aarch64-linux-android", "aarch64-unknown-linux-gnu", "arm-unknown-linux-gnueabi", "armv7-linux-androideabi", "armv7-unknown-linux-gnueabi", "i686-apple-darwin", "i686-linux-android", "i686-unknown-freebsd", "i686-unknown-linux-gnu", "powerpc-unknown-linux-gnu", "riscv32imc-unknown-none-elf", "s390x-unknown-linux-gnu", "wasm32-unknown-unknown", "wasm32-wasi", "x86_64-apple-darwin", "x86_64-apple-ios", "x86_64-linux-android", "x86_64-unknown-freebsd", "x86_64-unknown-linux-gnu"],
     "cfg(target_arch = \"wasm32\")": ["wasm32-unknown-unknown", "wasm32-wasi"],
     "cfg(target_env = \"msvc\")": ["i686-pc-windows-msvc", "x86_64-pc-windows-msvc"],
     "cfg(target_family = \"unix\")": ["aarch64-apple-darwin", "aarch64-apple-ios", "aarch64-apple-ios-sim", "aarch64-linux-android", "aarch64-unknown-linux-gnu", "arm-unknown-linux-gnueabi", "armv7-linux-androideabi", "armv7-unknown-linux-gnueabi", "i686-apple-darwin", "i686-linux-android", "i686-unknown-freebsd", "i686-unknown-linux-gnu", "powerpc-unknown-linux-gnu", "s390x-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-apple-ios", "x86_64-linux-android", "x86_64-unknown-freebsd", "x86_64-unknown-linux-gnu"],
+    "cfg(target_os = \"android\")": ["aarch64-linux-android", "armv7-linux-androideabi", "i686-linux-android", "x86_64-linux-android"],
     "cfg(target_os = \"hermit\")": [],
     "cfg(target_os = \"redox\")": [],
     "cfg(target_os = \"wasi\")": ["wasm32-wasi"],
+    "cfg(target_os = \"windows\")": ["i686-pc-windows-msvc", "x86_64-pc-windows-msvc"],
     "cfg(unix)": ["aarch64-apple-darwin", "aarch64-apple-ios", "aarch64-apple-ios-sim", "aarch64-linux-android", "aarch64-unknown-linux-gnu", "arm-unknown-linux-gnueabi", "armv7-linux-androideabi", "armv7-unknown-linux-gnueabi", "i686-apple-darwin", "i686-linux-android", "i686-unknown-freebsd", "i686-unknown-linux-gnu", "powerpc-unknown-linux-gnu", "s390x-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-apple-ios", "x86_64-linux-android", "x86_64-unknown-freebsd", "x86_64-unknown-linux-gnu"],
     "cfg(windows)": ["i686-pc-windows-msvc", "x86_64-pc-windows-msvc"],
     "i686-pc-windows-gnu": [],
@@ -415,32 +418,42 @@ def crate_repositories():
     """A macro for defining repositories for all generated crates"""
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__aho-corasick-0.7.18",
-        sha256 = "1e37cfd5e7657ada45f742d6e99ca5788580b5c529dc78faf11ece6dc702656f",
+        name = "rules_rust_wasm_bindgen__aho-corasick-0.7.19",
+        sha256 = "b4f55bd91a0978cbfd91c457a164bab8b4001c833b7f323132c0a4e1922dd44e",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/aho-corasick/0.7.18/download"],
-        strip_prefix = "aho-corasick-0.7.18",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.aho-corasick-0.7.18.bazel"),
+        urls = ["https://crates.io/api/v1/crates/aho-corasick/0.7.19/download"],
+        strip_prefix = "aho-corasick-0.7.19",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.aho-corasick-0.7.19.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__anyhow-1.0.58",
-        sha256 = "bb07d2053ccdbe10e2af2995a2f116c1330396493dc1269f6a91d0ae82e19704",
+        name = "rules_rust_wasm_bindgen__android_system_properties-0.1.5",
+        sha256 = "819e7219dbd41043ac279b19830f2efc897156490d7fd6ea916720117ee66311",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/anyhow/1.0.58/download"],
-        strip_prefix = "anyhow-1.0.58",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.anyhow-1.0.58.bazel"),
+        urls = ["https://crates.io/api/v1/crates/android_system_properties/0.1.5/download"],
+        strip_prefix = "android_system_properties-0.1.5",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.android_system_properties-0.1.5.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__ascii-1.0.0",
-        sha256 = "bbf56136a5198c7b01a49e3afcbef6cf84597273d298f54432926024107b0109",
+        name = "rules_rust_wasm_bindgen__anyhow-1.0.65",
+        sha256 = "98161a4e3e2184da77bb14f02184cdd111e83bbbcc9979dfee3c44b9a85f5602",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/ascii/1.0.0/download"],
-        strip_prefix = "ascii-1.0.0",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.ascii-1.0.0.bazel"),
+        urls = ["https://crates.io/api/v1/crates/anyhow/1.0.65/download"],
+        strip_prefix = "anyhow-1.0.65",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.anyhow-1.0.65.bazel"),
+    )
+
+    maybe(
+        http_archive,
+        name = "rules_rust_wasm_bindgen__ascii-1.1.0",
+        sha256 = "d92bec98840b8f03a5ff5413de5293bfcd8bf96467cf5452609f939ec6f5de16",
+        type = "tar.gz",
+        urls = ["https://crates.io/api/v1/crates/ascii/1.1.0/download"],
+        strip_prefix = "ascii-1.1.0",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.ascii-1.1.0.bazel"),
     )
 
     maybe(
@@ -525,12 +538,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__bumpalo-3.10.0",
-        sha256 = "37ccbd214614c6783386c1af30caf03192f17891059cecc394b4fb119e363de3",
+        name = "rules_rust_wasm_bindgen__bumpalo-3.11.0",
+        sha256 = "c1ad822118d20d2c234f427000d5acc36eabe1e29a348c89b63dd60b13f28e5d",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/bumpalo/3.10.0/download"],
-        strip_prefix = "bumpalo-3.10.0",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.bumpalo-3.10.0.bazel"),
+        urls = ["https://crates.io/api/v1/crates/bumpalo/3.11.0/download"],
+        strip_prefix = "bumpalo-3.11.0",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.bumpalo-3.11.0.bazel"),
     )
 
     maybe(
@@ -565,12 +578,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__chrono-0.4.19",
-        sha256 = "670ad68c9088c2a963aaa298cb369688cf3f9465ce5e2d4ca10e6e0098a1ce73",
+        name = "rules_rust_wasm_bindgen__chrono-0.4.22",
+        sha256 = "bfd4d1b31faaa3a89d7934dbded3111da0d2ef28e3ebccdb4f0179f5929d1ef1",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/chrono/0.4.19/download"],
-        strip_prefix = "chrono-0.4.19",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.chrono-0.4.19.bazel"),
+        urls = ["https://crates.io/api/v1/crates/chrono/0.4.22/download"],
+        strip_prefix = "chrono-0.4.22",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.chrono-0.4.22.bazel"),
     )
 
     maybe(
@@ -585,62 +598,72 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__crossbeam-channel-0.5.5",
-        sha256 = "4c02a4d71819009c192cf4872265391563fd6a84c81ff2c0f2a7026ca4c1d85c",
+        name = "rules_rust_wasm_bindgen__core-foundation-sys-0.8.3",
+        sha256 = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/crossbeam-channel/0.5.5/download"],
-        strip_prefix = "crossbeam-channel-0.5.5",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.crossbeam-channel-0.5.5.bazel"),
+        urls = ["https://crates.io/api/v1/crates/core-foundation-sys/0.8.3/download"],
+        strip_prefix = "core-foundation-sys-0.8.3",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.core-foundation-sys-0.8.3.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__crossbeam-deque-0.8.1",
-        sha256 = "6455c0ca19f0d2fbf751b908d5c55c1f5cbc65e03c4225427254b46890bdde1e",
+        name = "rules_rust_wasm_bindgen__crossbeam-channel-0.5.6",
+        sha256 = "c2dd04ddaf88237dc3b8d8f9a3c1004b506b54b3313403944054d23c0870c521",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/crossbeam-deque/0.8.1/download"],
-        strip_prefix = "crossbeam-deque-0.8.1",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.crossbeam-deque-0.8.1.bazel"),
+        urls = ["https://crates.io/api/v1/crates/crossbeam-channel/0.5.6/download"],
+        strip_prefix = "crossbeam-channel-0.5.6",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.crossbeam-channel-0.5.6.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__crossbeam-epoch-0.9.9",
-        sha256 = "07db9d94cbd326813772c968ccd25999e5f8ae22f4f8d1b11effa37ef6ce281d",
+        name = "rules_rust_wasm_bindgen__crossbeam-deque-0.8.2",
+        sha256 = "715e8152b692bba2d374b53d4875445368fdf21a94751410af607a5ac677d1fc",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/crossbeam-epoch/0.9.9/download"],
-        strip_prefix = "crossbeam-epoch-0.9.9",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.crossbeam-epoch-0.9.9.bazel"),
+        urls = ["https://crates.io/api/v1/crates/crossbeam-deque/0.8.2/download"],
+        strip_prefix = "crossbeam-deque-0.8.2",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.crossbeam-deque-0.8.2.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__crossbeam-utils-0.8.10",
-        sha256 = "7d82ee10ce34d7bc12c2122495e7593a9c41347ecdd64185af4ecf72cb1a7f83",
+        name = "rules_rust_wasm_bindgen__crossbeam-epoch-0.9.10",
+        sha256 = "045ebe27666471bb549370b4b0b3e51b07f56325befa4284db65fc89c02511b1",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/crossbeam-utils/0.8.10/download"],
-        strip_prefix = "crossbeam-utils-0.8.10",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.crossbeam-utils-0.8.10.bazel"),
+        urls = ["https://crates.io/api/v1/crates/crossbeam-epoch/0.9.10/download"],
+        strip_prefix = "crossbeam-epoch-0.9.10",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.crossbeam-epoch-0.9.10.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__curl-0.4.43",
-        sha256 = "37d855aeef205b43f65a5001e0997d81f8efca7badad4fad7d897aa7f0d0651f",
+        name = "rules_rust_wasm_bindgen__crossbeam-utils-0.8.11",
+        sha256 = "51887d4adc7b564537b15adcfb307936f8075dfcd5f00dde9a9f1d29383682bc",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/curl/0.4.43/download"],
-        strip_prefix = "curl-0.4.43",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.curl-0.4.43.bazel"),
+        urls = ["https://crates.io/api/v1/crates/crossbeam-utils/0.8.11/download"],
+        strip_prefix = "crossbeam-utils-0.8.11",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.crossbeam-utils-0.8.11.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__curl-sys-0.4.55-curl-7.83.1",
-        sha256 = "23734ec77368ec583c2e61dd3f0b0e5c98b93abe6d2a004ca06b91dd7e3e2762",
+        name = "rules_rust_wasm_bindgen__curl-0.4.44",
+        sha256 = "509bd11746c7ac09ebd19f0b17782eae80aadee26237658a6b4808afb5c11a22",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/curl-sys/0.4.55+curl-7.83.1/download"],
-        strip_prefix = "curl-sys-0.4.55+curl-7.83.1",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.curl-sys-0.4.55+curl-7.83.1.bazel"),
+        urls = ["https://crates.io/api/v1/crates/curl/0.4.44/download"],
+        strip_prefix = "curl-0.4.44",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.curl-0.4.44.bazel"),
+    )
+
+    maybe(
+        http_archive,
+        name = "rules_rust_wasm_bindgen__curl-sys-0.4.56-curl-7.83.1",
+        sha256 = "6093e169dd4de29e468fa649fbae11cdcd5551c81fe5bf1b0677adad7ef3d26f",
+        type = "tar.gz",
+        urls = ["https://crates.io/api/v1/crates/curl-sys/0.4.56+curl-7.83.1/download"],
+        strip_prefix = "curl-sys-0.4.56+curl-7.83.1",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.curl-sys-0.4.56+curl-7.83.1.bazel"),
     )
 
     maybe(
@@ -695,12 +718,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__either-1.7.0",
-        sha256 = "3f107b87b6afc2a64fd13cac55fe06d6c8859f12d4b14cbcdd2c67d0976781be",
+        name = "rules_rust_wasm_bindgen__either-1.8.0",
+        sha256 = "90e5c1c8368803113bf0c9584fc495a58b86dc8a29edbf8fe877d21d9507e797",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/either/1.7.0/download"],
-        strip_prefix = "either-1.7.0",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.either-1.7.0.bazel"),
+        urls = ["https://crates.io/api/v1/crates/either/1.8.0/download"],
+        strip_prefix = "either-1.8.0",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.either-1.8.0.bazel"),
     )
 
     maybe(
@@ -715,12 +738,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__fastrand-1.7.0",
-        sha256 = "c3fcf0cee53519c866c09b5de1f6c56ff9d647101f81c1964fa632e148896cdf",
+        name = "rules_rust_wasm_bindgen__fastrand-1.8.0",
+        sha256 = "a7a407cfaa3385c4ae6b23e84623d48c2798d06e3e6a1878f7f59f17b3f86499",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/fastrand/1.7.0/download"],
-        strip_prefix = "fastrand-1.7.0",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.fastrand-1.7.0.bazel"),
+        urls = ["https://crates.io/api/v1/crates/fastrand/1.8.0/download"],
+        strip_prefix = "fastrand-1.8.0",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.fastrand-1.8.0.bazel"),
     )
 
     maybe(
@@ -745,12 +768,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__form_urlencoded-1.0.1",
-        sha256 = "5fc25a87fa4fd2094bffb06925852034d90a17f0d1e05197d4956d3555752191",
+        name = "rules_rust_wasm_bindgen__form_urlencoded-1.1.0",
+        sha256 = "a9c384f161156f5260c24a097c56119f9be8c798586aecc13afbcbe7b7e26bf8",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/form_urlencoded/1.0.1/download"],
-        strip_prefix = "form_urlencoded-1.0.1",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.form_urlencoded-1.0.1.bazel"),
+        urls = ["https://crates.io/api/v1/crates/form_urlencoded/1.1.0/download"],
+        strip_prefix = "form_urlencoded-1.1.0",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.form_urlencoded-1.1.0.bazel"),
     )
 
     maybe(
@@ -785,12 +808,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__httparse-1.7.1",
-        sha256 = "496ce29bb5a52785b44e0f7ca2847ae0bb839c9bd28f69acac9b99d461c0c04c",
+        name = "rules_rust_wasm_bindgen__httparse-1.8.0",
+        sha256 = "d897f394bad6a705d5f4104762e116a75639e470d80901eed05a860a95cb1904",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/httparse/1.7.1/download"],
-        strip_prefix = "httparse-1.7.1",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.httparse-1.7.1.bazel"),
+        urls = ["https://crates.io/api/v1/crates/httparse/1.8.0/download"],
+        strip_prefix = "httparse-1.8.0",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.httparse-1.8.0.bazel"),
     )
 
     maybe(
@@ -805,6 +828,16 @@ def crate_repositories():
 
     maybe(
         http_archive,
+        name = "rules_rust_wasm_bindgen__iana-time-zone-0.1.50",
+        sha256 = "fd911b35d940d2bd0bea0f9100068e5b97b51a1cbe13d13382f132e0365257a0",
+        type = "tar.gz",
+        urls = ["https://crates.io/api/v1/crates/iana-time-zone/0.1.50/download"],
+        strip_prefix = "iana-time-zone-0.1.50",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.iana-time-zone-0.1.50.bazel"),
+    )
+
+    maybe(
+        http_archive,
         name = "rules_rust_wasm_bindgen__id-arena-2.2.1",
         sha256 = "25a2bc672d1148e28034f176e01fffebb08b35768468cc954630da77a1449005",
         type = "tar.gz",
@@ -815,12 +848,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__idna-0.2.3",
-        sha256 = "418a0a6fab821475f634efe3ccc45c013f742efe03d853e8d3355d5cb850ecf8",
+        name = "rules_rust_wasm_bindgen__idna-0.3.0",
+        sha256 = "e14ddfc70884202db2244c223200c204c2bda1bc6e0998d11b5e024d657209e6",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/idna/0.2.3/download"],
-        strip_prefix = "idna-0.2.3",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.idna-0.2.3.bazel"),
+        urls = ["https://crates.io/api/v1/crates/idna/0.3.0/download"],
+        strip_prefix = "idna-0.3.0",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.idna-0.3.0.bazel"),
     )
 
     maybe(
@@ -835,22 +868,32 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__itertools-0.10.3",
-        sha256 = "a9a9d19fa1e79b6215ff29b9d6880b706147f16e9b1dbb1e4e5947b5b02bc5e3",
+        name = "rules_rust_wasm_bindgen__itertools-0.10.5",
+        sha256 = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/itertools/0.10.3/download"],
-        strip_prefix = "itertools-0.10.3",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.itertools-0.10.3.bazel"),
+        urls = ["https://crates.io/api/v1/crates/itertools/0.10.5/download"],
+        strip_prefix = "itertools-0.10.5",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.itertools-0.10.5.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__itoa-1.0.2",
-        sha256 = "112c678d4050afce233f4f2852bb2eb519230b3cf12f33585275537d7e41578d",
+        name = "rules_rust_wasm_bindgen__itoa-1.0.3",
+        sha256 = "6c8af84674fe1f223a982c933a0ee1086ac4d4052aa0fb8060c12c6ad838e754",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/itoa/1.0.2/download"],
-        strip_prefix = "itoa-1.0.2",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.itoa-1.0.2.bazel"),
+        urls = ["https://crates.io/api/v1/crates/itoa/1.0.3/download"],
+        strip_prefix = "itoa-1.0.3",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.itoa-1.0.3.bazel"),
+    )
+
+    maybe(
+        http_archive,
+        name = "rules_rust_wasm_bindgen__js-sys-0.3.60",
+        sha256 = "49409df3e3bf0856b916e2ceaca09ee28e6871cf7d9ce97a692cacfdb2a25a47",
+        type = "tar.gz",
+        urls = ["https://crates.io/api/v1/crates/js-sys/0.3.60/download"],
+        strip_prefix = "js-sys-0.3.60",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.js-sys-0.3.60.bazel"),
     )
 
     maybe(
@@ -875,12 +918,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__libc-0.2.126",
-        sha256 = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836",
+        name = "rules_rust_wasm_bindgen__libc-0.2.133",
+        sha256 = "c0f80d65747a3e43d1596c7c5492d95d5edddaabd45a7fcdb02b95f644164966",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/libc/0.2.126/download"],
-        strip_prefix = "libc-0.2.126",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.libc-0.2.126.bazel"),
+        urls = ["https://crates.io/api/v1/crates/libc/0.2.133/download"],
+        strip_prefix = "libc-0.2.133",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.libc-0.2.133.bazel"),
     )
 
     maybe(
@@ -901,16 +944,6 @@ def crate_repositories():
         urls = ["https://crates.io/api/v1/crates/log/0.4.17/download"],
         strip_prefix = "log-0.4.17",
         build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.log-0.4.17.bazel"),
-    )
-
-    maybe(
-        http_archive,
-        name = "rules_rust_wasm_bindgen__matches-0.1.9",
-        sha256 = "a3e378b66a060d48947b590737b30a1be76706c8dd7b8ba0f2fe3989c68a853f",
-        type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/matches/0.1.9/download"],
-        strip_prefix = "matches-0.1.9",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.matches-0.1.9.bazel"),
     )
 
     maybe(
@@ -1015,12 +1048,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__once_cell-1.13.0",
-        sha256 = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1",
+        name = "rules_rust_wasm_bindgen__once_cell-1.15.0",
+        sha256 = "e82dad04139b71a90c080c8463fe0dc7902db5192d939bd0950f074d014339e1",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/once_cell/1.13.0/download"],
-        strip_prefix = "once_cell-1.13.0",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.once_cell-1.13.0.bazel"),
+        urls = ["https://crates.io/api/v1/crates/once_cell/1.15.0/download"],
+        strip_prefix = "once_cell-1.15.0",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.once_cell-1.15.0.bazel"),
     )
 
     maybe(
@@ -1035,22 +1068,22 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__openssl-sys-0.9.75",
-        sha256 = "e5f9bd0c2710541a3cda73d6f9ac4f1b240de4ae261065d309dbe73d9dceb42f",
+        name = "rules_rust_wasm_bindgen__openssl-sys-0.9.76",
+        sha256 = "5230151e44c0f05157effb743e8d517472843121cf9243e8b81393edb5acd9ce",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/openssl-sys/0.9.75/download"],
-        strip_prefix = "openssl-sys-0.9.75",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.openssl-sys-0.9.75.bazel"),
+        urls = ["https://crates.io/api/v1/crates/openssl-sys/0.9.76/download"],
+        strip_prefix = "openssl-sys-0.9.76",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.openssl-sys-0.9.76.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__percent-encoding-2.1.0",
-        sha256 = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e",
+        name = "rules_rust_wasm_bindgen__percent-encoding-2.2.0",
+        sha256 = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/percent-encoding/2.1.0/download"],
-        strip_prefix = "percent-encoding-2.1.0",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.percent-encoding-2.1.0.bazel"),
+        urls = ["https://crates.io/api/v1/crates/percent-encoding/2.2.0/download"],
+        strip_prefix = "percent-encoding-2.2.0",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.percent-encoding-2.2.0.bazel"),
     )
 
     maybe(
@@ -1115,12 +1148,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__proc-macro2-1.0.40",
-        sha256 = "dd96a1e8ed2596c337f8eae5f24924ec83f5ad5ab21ea8e455d3566c69fbcaf7",
+        name = "rules_rust_wasm_bindgen__proc-macro2-1.0.44",
+        sha256 = "7bd7356a8122b6c4a24a82b278680c73357984ca2fc79a0f9fa6dea7dced7c58",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/proc-macro2/1.0.40/download"],
-        strip_prefix = "proc-macro2-1.0.40",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.proc-macro2-1.0.40.bazel"),
+        urls = ["https://crates.io/api/v1/crates/proc-macro2/1.0.44/download"],
+        strip_prefix = "proc-macro2-1.0.44",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.proc-macro2-1.0.44.bazel"),
     )
 
     maybe(
@@ -1135,12 +1168,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__quote-1.0.20",
-        sha256 = "3bcdf212e9776fbcb2d23ab029360416bb1706b1aea2d1a5ba002727cbcab804",
+        name = "rules_rust_wasm_bindgen__quote-1.0.21",
+        sha256 = "bbe448f377a7d6961e30f5955f9b8d106c3f5e449d493ee1b125c1d43c2b5179",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/quote/1.0.20/download"],
-        strip_prefix = "quote-1.0.20",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.quote-1.0.20.bazel"),
+        urls = ["https://crates.io/api/v1/crates/quote/1.0.21/download"],
+        strip_prefix = "quote-1.0.21",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.quote-1.0.21.bazel"),
     )
 
     maybe(
@@ -1165,12 +1198,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__rand_core-0.6.3",
-        sha256 = "d34f1408f55294453790c48b2f1ebbb1c5b4b7563eb1f418bcfcfdbb06ebb4e7",
+        name = "rules_rust_wasm_bindgen__rand_core-0.6.4",
+        sha256 = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/rand_core/0.6.3/download"],
-        strip_prefix = "rand_core-0.6.3",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.rand_core-0.6.3.bazel"),
+        urls = ["https://crates.io/api/v1/crates/rand_core/0.6.4/download"],
+        strip_prefix = "rand_core-0.6.4",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.rand_core-0.6.4.bazel"),
     )
 
     maybe(
@@ -1195,12 +1228,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__redox_syscall-0.2.13",
-        sha256 = "62f25bc4c7e55e0b0b7a1d43fb893f4fa1361d0abe38b9ce4f323c2adfe6ef42",
+        name = "rules_rust_wasm_bindgen__redox_syscall-0.2.16",
+        sha256 = "fb5a58c1855b4b6819d59012155603f0b22ad30cad752600aadfcb695265519a",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/redox_syscall/0.2.13/download"],
-        strip_prefix = "redox_syscall-0.2.13",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.redox_syscall-0.2.13.bazel"),
+        urls = ["https://crates.io/api/v1/crates/redox_syscall/0.2.16/download"],
+        strip_prefix = "redox_syscall-0.2.16",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.redox_syscall-0.2.16.bazel"),
     )
 
     maybe(
@@ -1265,12 +1298,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__ryu-1.0.10",
-        sha256 = "f3f6f92acf49d1b98f7a81226834412ada05458b7364277387724a237f062695",
+        name = "rules_rust_wasm_bindgen__ryu-1.0.11",
+        sha256 = "4501abdff3ae82a1c1b477a17252eb69cee9e66eb915c1abaa4f44d873df9f09",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/ryu/1.0.10/download"],
-        strip_prefix = "ryu-1.0.10",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.ryu-1.0.10.bazel"),
+        urls = ["https://crates.io/api/v1/crates/ryu/1.0.11/download"],
+        strip_prefix = "ryu-1.0.11",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.ryu-1.0.11.bazel"),
     )
 
     maybe(
@@ -1305,32 +1338,32 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__serde-1.0.139",
-        sha256 = "0171ebb889e45aa68b44aee0859b3eede84c6f5f5c228e6f140c0b2a0a46cad6",
+        name = "rules_rust_wasm_bindgen__serde-1.0.145",
+        sha256 = "728eb6351430bccb993660dfffc5a72f91ccc1295abaa8ce19b27ebe4f75568b",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/serde/1.0.139/download"],
-        strip_prefix = "serde-1.0.139",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.serde-1.0.139.bazel"),
+        urls = ["https://crates.io/api/v1/crates/serde/1.0.145/download"],
+        strip_prefix = "serde-1.0.145",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.serde-1.0.145.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__serde_derive-1.0.139",
-        sha256 = "dc1d3230c1de7932af58ad8ffbe1d784bd55efd5a9d84ac24f69c72d83543dfb",
+        name = "rules_rust_wasm_bindgen__serde_derive-1.0.145",
+        sha256 = "81fa1584d3d1bcacd84c277a0dfe21f5b0f6accf4a23d04d4c6d61f1af522b4c",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/serde_derive/1.0.139/download"],
-        strip_prefix = "serde_derive-1.0.139",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.serde_derive-1.0.139.bazel"),
+        urls = ["https://crates.io/api/v1/crates/serde_derive/1.0.145/download"],
+        strip_prefix = "serde_derive-1.0.145",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.serde_derive-1.0.145.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__serde_json-1.0.82",
-        sha256 = "82c2c1fdcd807d1098552c5b9a36e425e42e9fbd7c6a37a8425f390f781f7fa7",
+        name = "rules_rust_wasm_bindgen__serde_json-1.0.85",
+        sha256 = "e55a28e3aaef9d5ce0506d0a14dbba8054ddc7e499ef522dd8b26859ec9d4a44",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/serde_json/1.0.82/download"],
-        strip_prefix = "serde_json-1.0.82",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.serde_json-1.0.82.bazel"),
+        urls = ["https://crates.io/api/v1/crates/serde_json/1.0.85/download"],
+        strip_prefix = "serde_json-1.0.85",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.serde_json-1.0.85.bazel"),
     )
 
     maybe(
@@ -1355,12 +1388,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__socket2-0.4.4",
-        sha256 = "66d72b759436ae32898a2af0a14218dbf55efde3feeb170eb623637db85ee1e0",
+        name = "rules_rust_wasm_bindgen__socket2-0.4.7",
+        sha256 = "02e2d2db9033d13a1567121ddd7a095ee144db4e1ca1b1bda3419bc0da294ebd",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/socket2/0.4.4/download"],
-        strip_prefix = "socket2-0.4.4",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.socket2-0.4.4.bazel"),
+        urls = ["https://crates.io/api/v1/crates/socket2/0.4.7/download"],
+        strip_prefix = "socket2-0.4.7",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.socket2-0.4.7.bazel"),
     )
 
     maybe(
@@ -1375,12 +1408,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__syn-1.0.98",
-        sha256 = "c50aef8a904de4c23c788f104b7dddc7d6f79c647c7c8ce4cc8f73eb0ca773dd",
+        name = "rules_rust_wasm_bindgen__syn-1.0.101",
+        sha256 = "e90cde112c4b9690b8cbe810cba9ddd8bc1d7472e2cae317b69e9438c1cba7d2",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/syn/1.0.98/download"],
-        strip_prefix = "syn-1.0.98",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.syn-1.0.98.bazel"),
+        urls = ["https://crates.io/api/v1/crates/syn/1.0.101/download"],
+        strip_prefix = "syn-1.0.101",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.syn-1.0.101.bazel"),
     )
 
     maybe(
@@ -1425,12 +1458,12 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__time-0.3.11",
-        sha256 = "72c91f41dcb2f096c05f0873d667dceec1087ce5bcf984ec8ffb19acddbb3217",
+        name = "rules_rust_wasm_bindgen__time-0.3.14",
+        sha256 = "3c3f9a28b618c3a6b9251b6908e9c99e04b9e5c02e6581ccbb67d59c34ef7f9b",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/time/0.3.11/download"],
-        strip_prefix = "time-0.3.11",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.time-0.3.11.bazel"),
+        urls = ["https://crates.io/api/v1/crates/time/0.3.14/download"],
+        strip_prefix = "time-0.3.14",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.time-0.3.14.bazel"),
     )
 
     maybe(
@@ -1495,42 +1528,42 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__unicode-ident-1.0.1",
-        sha256 = "5bd2fe26506023ed7b5e1e315add59d6f584c621d037f9368fea9cfb988f368c",
+        name = "rules_rust_wasm_bindgen__unicode-ident-1.0.4",
+        sha256 = "dcc811dc4066ac62f84f11307873c4850cb653bfa9b1719cee2bd2204a4bc5dd",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/unicode-ident/1.0.1/download"],
-        strip_prefix = "unicode-ident-1.0.1",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.unicode-ident-1.0.1.bazel"),
+        urls = ["https://crates.io/api/v1/crates/unicode-ident/1.0.4/download"],
+        strip_prefix = "unicode-ident-1.0.4",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.unicode-ident-1.0.4.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__unicode-normalization-0.1.21",
-        sha256 = "854cbdc4f7bc6ae19c820d44abdc3277ac3e1b2b93db20a636825d9322fb60e6",
+        name = "rules_rust_wasm_bindgen__unicode-normalization-0.1.22",
+        sha256 = "5c5713f0fc4b5db668a2ac63cdb7bb4469d8c9fed047b1d0292cc7b0ce2ba921",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/unicode-normalization/0.1.21/download"],
-        strip_prefix = "unicode-normalization-0.1.21",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.unicode-normalization-0.1.21.bazel"),
+        urls = ["https://crates.io/api/v1/crates/unicode-normalization/0.1.22/download"],
+        strip_prefix = "unicode-normalization-0.1.22",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.unicode-normalization-0.1.22.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__unicode-segmentation-1.9.0",
-        sha256 = "7e8820f5d777f6224dc4be3632222971ac30164d4a258d595640799554ebfd99",
+        name = "rules_rust_wasm_bindgen__unicode-segmentation-1.10.0",
+        sha256 = "0fdbf052a0783de01e944a6ce7a8cb939e295b1e7be835a1112c3b9a7f047a5a",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/unicode-segmentation/1.9.0/download"],
-        strip_prefix = "unicode-segmentation-1.9.0",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.unicode-segmentation-1.9.0.bazel"),
+        urls = ["https://crates.io/api/v1/crates/unicode-segmentation/1.10.0/download"],
+        strip_prefix = "unicode-segmentation-1.10.0",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.unicode-segmentation-1.10.0.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__url-2.2.2",
-        sha256 = "a507c383b2d33b5fc35d1861e77e6b383d158b2da5e14fe51b83dfedf6fd578c",
+        name = "rules_rust_wasm_bindgen__url-2.3.1",
+        sha256 = "0d68c799ae75762b8c3fe375feb6600ef5602c883c5d21eb51c09f22b83c4643",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/url/2.2.2/download"],
-        strip_prefix = "url-2.2.2",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.url-2.2.2.bazel"),
+        urls = ["https://crates.io/api/v1/crates/url/2.3.1/download"],
+        strip_prefix = "url-2.3.1",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.url-2.3.1.bazel"),
     )
 
     maybe(
@@ -1595,112 +1628,112 @@ def crate_repositories():
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__wasm-bindgen-0.2.81",
-        sha256 = "7c53b543413a17a202f4be280a7e5c62a1c69345f5de525ee64f8cfdbc954994",
+        name = "rules_rust_wasm_bindgen__wasm-bindgen-0.2.83",
+        sha256 = "eaf9f5aceeec8be17c128b2e93e031fb8a4d469bb9c4ae2d7dc1888b26887268",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/wasm-bindgen/0.2.81/download"],
-        strip_prefix = "wasm-bindgen-0.2.81",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-0.2.81.bazel"),
+        urls = ["https://crates.io/api/v1/crates/wasm-bindgen/0.2.83/download"],
+        strip_prefix = "wasm-bindgen-0.2.83",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-0.2.83.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__wasm-bindgen-backend-0.2.81",
-        sha256 = "5491a68ab4500fa6b4d726bd67408630c3dbe9c4fe7bda16d5c82a1fd8c7340a",
+        name = "rules_rust_wasm_bindgen__wasm-bindgen-backend-0.2.83",
+        sha256 = "4c8ffb332579b0557b52d268b91feab8df3615f265d5270fec2a8c95b17c1142",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-backend/0.2.81/download"],
-        strip_prefix = "wasm-bindgen-backend-0.2.81",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-backend-0.2.81.bazel"),
+        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-backend/0.2.83/download"],
+        strip_prefix = "wasm-bindgen-backend-0.2.83",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-backend-0.2.83.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__wasm-bindgen-cli-support-0.2.81",
-        sha256 = "4016fbd42224de21aab2f009aeaec61067d278a298ba7f8f7f8d40fbffea0822",
+        name = "rules_rust_wasm_bindgen__wasm-bindgen-cli-support-0.2.83",
+        sha256 = "03f35e0387a2c787ca5ee299bfb4259352b2a2184b406f8ee9f978c3c4671645",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-cli-support/0.2.81/download"],
-        strip_prefix = "wasm-bindgen-cli-support-0.2.81",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-cli-support-0.2.81.bazel"),
+        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-cli-support/0.2.83/download"],
+        strip_prefix = "wasm-bindgen-cli-support-0.2.83",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-cli-support-0.2.83.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__wasm-bindgen-externref-xform-0.2.81",
-        sha256 = "f33c8e2d3f3b6f6647f982911eb4cb44998c8cca97a4fe7afc99f616ebb33a73",
+        name = "rules_rust_wasm_bindgen__wasm-bindgen-externref-xform-0.2.83",
+        sha256 = "0d010a32a516a793adbea5835eab6f736d11c0cdd10ebe0c762c420f67510244",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-externref-xform/0.2.81/download"],
-        strip_prefix = "wasm-bindgen-externref-xform-0.2.81",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-externref-xform-0.2.81.bazel"),
+        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-externref-xform/0.2.83/download"],
+        strip_prefix = "wasm-bindgen-externref-xform-0.2.83",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-externref-xform-0.2.83.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__wasm-bindgen-macro-0.2.81",
-        sha256 = "c441e177922bc58f1e12c022624b6216378e5febc2f0533e41ba443d505b80aa",
+        name = "rules_rust_wasm_bindgen__wasm-bindgen-macro-0.2.83",
+        sha256 = "052be0f94026e6cbc75cdefc9bae13fd6052cdcaf532fa6c45e7ae33a1e6c810",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-macro/0.2.81/download"],
-        strip_prefix = "wasm-bindgen-macro-0.2.81",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-macro-0.2.81.bazel"),
+        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-macro/0.2.83/download"],
+        strip_prefix = "wasm-bindgen-macro-0.2.83",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-macro-0.2.83.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__wasm-bindgen-macro-support-0.2.81",
-        sha256 = "7d94ac45fcf608c1f45ef53e748d35660f168490c10b23704c7779ab8f5c3048",
+        name = "rules_rust_wasm_bindgen__wasm-bindgen-macro-support-0.2.83",
+        sha256 = "07bc0c051dc5f23e307b13285f9d75df86bfdf816c5721e573dec1f9b8aa193c",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-macro-support/0.2.81/download"],
-        strip_prefix = "wasm-bindgen-macro-support-0.2.81",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-macro-support-0.2.81.bazel"),
+        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-macro-support/0.2.83/download"],
+        strip_prefix = "wasm-bindgen-macro-support-0.2.83",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-macro-support-0.2.83.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__wasm-bindgen-multi-value-xform-0.2.81",
-        sha256 = "7015b54357604811162710d5cf274ab85d974fe1e324222dd5b2133afdefe9b9",
+        name = "rules_rust_wasm_bindgen__wasm-bindgen-multi-value-xform-0.2.83",
+        sha256 = "78b8c8d5dcc451b7e6a9c98d8fd966ff768a1e8f8afb270a829780086f2885ac",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-multi-value-xform/0.2.81/download"],
-        strip_prefix = "wasm-bindgen-multi-value-xform-0.2.81",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-multi-value-xform-0.2.81.bazel"),
+        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-multi-value-xform/0.2.83/download"],
+        strip_prefix = "wasm-bindgen-multi-value-xform-0.2.83",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-multi-value-xform-0.2.83.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__wasm-bindgen-shared-0.2.81",
-        sha256 = "6a89911bd99e5f3659ec4acf9c4d93b0a90fe4a2a11f15328472058edc5261be",
+        name = "rules_rust_wasm_bindgen__wasm-bindgen-shared-0.2.83",
+        sha256 = "1c38c045535d93ec4f0b4defec448e4291638ee608530863b1e2ba115d4fff7f",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-shared/0.2.81/download"],
-        strip_prefix = "wasm-bindgen-shared-0.2.81",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-shared-0.2.81.bazel"),
+        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-shared/0.2.83/download"],
+        strip_prefix = "wasm-bindgen-shared-0.2.83",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-shared-0.2.83.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__wasm-bindgen-threads-xform-0.2.81",
-        sha256 = "6961b838d9a9c121ba4a1eea1628014cc759469e3defb42bbac9c5ed0f65be14",
+        name = "rules_rust_wasm_bindgen__wasm-bindgen-threads-xform-0.2.83",
+        sha256 = "0d10f9246c4daa911283a7096fc3be9f1fab9e3e36400478a4ab8d7056701420",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-threads-xform/0.2.81/download"],
-        strip_prefix = "wasm-bindgen-threads-xform-0.2.81",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-threads-xform-0.2.81.bazel"),
+        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-threads-xform/0.2.83/download"],
+        strip_prefix = "wasm-bindgen-threads-xform-0.2.83",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-threads-xform-0.2.83.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__wasm-bindgen-wasm-conventions-0.2.81",
-        sha256 = "c0a0eca38fe89471f57d6903f3e17e732d2d6f995a7af5b23f27df7fee0f0d18",
+        name = "rules_rust_wasm_bindgen__wasm-bindgen-wasm-conventions-0.2.83",
+        sha256 = "b4a5ab217f12f73b7c3ff23cbbbb5d36f7ee97dd65bb0be44beebda887df9002",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-wasm-conventions/0.2.81/download"],
-        strip_prefix = "wasm-bindgen-wasm-conventions-0.2.81",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-wasm-conventions-0.2.81.bazel"),
+        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-wasm-conventions/0.2.83/download"],
+        strip_prefix = "wasm-bindgen-wasm-conventions-0.2.83",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-wasm-conventions-0.2.83.bazel"),
     )
 
     maybe(
         http_archive,
-        name = "rules_rust_wasm_bindgen__wasm-bindgen-wasm-interpreter-0.2.81",
-        sha256 = "0b1c9fb7f71137840932bbb853ef1f83d68c88584b716c9bbae38675c9fb8b86",
+        name = "rules_rust_wasm_bindgen__wasm-bindgen-wasm-interpreter-0.2.83",
+        sha256 = "8fbb6c773b486889b7c1211d27a7a08eebaf54ec4269380266cadf69e269cd91",
         type = "tar.gz",
-        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-wasm-interpreter/0.2.81/download"],
-        strip_prefix = "wasm-bindgen-wasm-interpreter-0.2.81",
-        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-wasm-interpreter-0.2.81.bazel"),
+        urls = ["https://crates.io/api/v1/crates/wasm-bindgen-wasm-interpreter/0.2.83/download"],
+        strip_prefix = "wasm-bindgen-wasm-interpreter-0.2.83",
+        build_file = Label("@rules_rust//wasm_bindgen/3rdparty/crates:BUILD.wasm-bindgen-wasm-interpreter-0.2.83.bazel"),
     )
 
     maybe(

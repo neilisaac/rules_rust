@@ -996,7 +996,7 @@ def construct_arguments(
         rustc_flags.add("--extern")
         rustc_flags.add("proc_macro")
 
-    if toolchain.llvm_cov and ctx.configuration.coverage_enabled:
+    if toolchain.llvm_cov and ctx.configuration.coverage_enabled and crate_info.is_test:
         rustc_flags.add("--codegen=instrument-coverage")
 
     # Make bin crate data deps available to tests.

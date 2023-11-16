@@ -14,8 +14,9 @@
 
 """Utility functions not specific to the rust toolchain."""
 
+load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", find_rules_cc_toolchain = "find_cpp_toolchain")
-load(":providers.bzl", "BuildInfo", "CrateInfo", "DepInfo", "DepVariantInfo")
+load(":providers.bzl", "BuildInfo", "CrateGroupInfo", "CrateInfo", "DepInfo", "DepVariantInfo")
 
 UNSUPPORTED_FEATURES = [
     "thin_lto",
@@ -135,7 +136,7 @@ def get_lib_name_default(lib):
 # so the following doesn't work:
 #     args.add_all(
 #         cc_toolchain.dynamic_runtime_lib(feature_configuration = feature_configuration),
-#         map_each = lambda x: get_lib_name(x, for_windows = toolchain.os.startswith("windows)),
+#         map_each = lambda x: get_lib_name(x, for_windows = toolchain.target_os.startswith("windows)),
 #         format_each = "-ldylib=%s",
 #     )
 def get_lib_name_for_windows(lib):
@@ -223,7 +224,19 @@ def get_preferred_artifact(library_to_link, use_pic):
             library_to_link.dynamic_library
         )
 
-def _expand_location(ctx, env, data):
+# The normal ctx.expand_location, but with an additional deduplication step.
+# We do this to work around a potential crash, see
+# https://github.com/bazelbuild/bazel/issues/16664
+def dedup_expand_location(ctx, input, targets = []):
+    return ctx.expand_location(input, _deduplicate(targets))
+
+def _deduplicate(xs):
+    return {x: True for x in xs}.keys()
+
+def concat(xss):
+    return [x for xs in xss for x in xs]
+
+def _expand_location_for_build_script_runner(ctx, env, data):
     """A trivial helper for `expand_dict_value_locations` and `expand_list_element_locations`
 
     Args:
@@ -240,7 +253,7 @@ def _expand_location(ctx, env, data):
             env = env.replace(directive, "$${pwd}/" + directive)
     return ctx.expand_make_variables(
         env,
-        ctx.expand_location(env, data),
+        dedup_expand_location(ctx, env, data),
         {},
     )
 
@@ -273,7 +286,7 @@ def expand_dict_value_locations(ctx, env, data):
     Returns:
         dict: A dict of environment variables with expanded location macros
     """
-    return dict([(k, _expand_location(ctx, v, data)) for (k, v) in env.items()])
+    return dict([(k, _expand_location_for_build_script_runner(ctx, v, data)) for (k, v) in env.items()])
 
 def expand_list_element_locations(ctx, args, data):
     """Performs location-macro expansion on a list of string values.
@@ -296,7 +309,7 @@ def expand_list_element_locations(ctx, args, data):
     Returns:
         list: A list of arguments with expanded location macros
     """
-    return [_expand_location(ctx, arg, data) for arg in args]
+    return [_expand_location_for_build_script_runner(ctx, arg, data) for arg in args]
 
 def name_to_crate_name(name):
     """Converts a build target's name into the name of its associated crate.
@@ -463,6 +476,7 @@ def transform_deps(deps):
         dep_info = dep[DepInfo] if DepInfo in dep else None,
         build_info = dep[BuildInfo] if BuildInfo in dep else None,
         cc_info = dep[CcInfo] if CcInfo in dep else None,
+        crate_group_info = dep[CrateGroupInfo] if CrateGroupInfo in dep else None,
     ) for dep in deps]
 
 def get_import_macro_deps(ctx):
@@ -667,7 +681,7 @@ def can_build_metadata(toolchain, ctx, crate_type):
     # 3) process_wrapper is enabled (this is disabled when compiling process_wrapper itself),
     # 4) the crate_type is rlib or lib.
     return toolchain._pipelined_compilation and \
-           toolchain.os != "windows" and \
+           toolchain.exec_triple.system != "windows" and \
            ctx.attr._process_wrapper and \
            crate_type in ("rlib", "lib")
 
@@ -712,3 +726,126 @@ def _shortest_src_with_basename(srcs, basename):
             if not shortest or len(f.dirname) < len(shortest.dirname):
                 shortest = f
     return shortest
+
+def determine_lib_name(name, crate_type, toolchain, lib_hash = None):
+    """See https://github.com/bazelbuild/rules_rust/issues/405
+
+    Args:
+        name (str): The name of the current target
+        crate_type (str): The `crate_type`
+        toolchain (rust_toolchain): The current `rust_toolchain`
+        lib_hash (str, optional): The hashed crate root path
+
+    Returns:
+        str: A unique library name
+    """
+    extension = None
+    prefix = ""
+    if crate_type in ("dylib", "cdylib", "proc-macro"):
+        extension = toolchain.dylib_ext
+    elif crate_type == "staticlib":
+        extension = toolchain.staticlib_ext
+    elif crate_type in ("lib", "rlib"):
+        # All platforms produce 'rlib' here
+        extension = ".rlib"
+        prefix = "lib"
+    elif crate_type == "bin":
+        fail("crate_type of 'bin' was detected in a rust_library. Please compile " +
+             "this crate as a rust_binary instead.")
+
+    if not extension:
+        fail(("Unknown crate_type: {}. If this is a cargo-supported crate type, " +
+              "please file an issue!").format(crate_type))
+
+    prefix = "lib"
+    if toolchain.target_triple and toolchain.target_os == "windows" and crate_type not in ("lib", "rlib"):
+        prefix = ""
+    if toolchain.target_arch == "wasm32" and crate_type == "cdylib":
+        prefix = ""
+
+    return "{prefix}{name}{lib_hash}{extension}".format(
+        prefix = prefix,
+        name = name,
+        lib_hash = "-" + lib_hash if lib_hash else "",
+        extension = extension,
+    )
+
+def transform_sources(ctx, srcs, crate_root):
+    """Creates symlinks of the source files if needed.
+
+    Rustc assumes that the source files are located next to the crate root.
+    In case of a mix between generated and non-generated source files, this
+    we violate this assumption, as part of the sources will be located under
+    bazel-out/... . In order to allow for targets that contain both generated
+    and non-generated source files, we generate symlinks for all non-generated
+    files.
+
+    Args:
+        ctx (struct): The current rule's context.
+        srcs (List[File]): The sources listed in the `srcs` attribute
+        crate_root (File): The file specified in the `crate_root` attribute,
+                           if it exists, otherwise None
+
+    Returns:
+        Tuple(List[File], File): The transformed srcs and crate_root
+    """
+    has_generated_sources = len([src for src in srcs if not src.is_source]) > 0
+
+    if not has_generated_sources:
+        return srcs, crate_root
+
+    package_root = paths.dirname(paths.join(ctx.label.workspace_root, ctx.build_file_path))
+    generated_sources = [_symlink_for_non_generated_source(ctx, src, package_root) for src in srcs if src != crate_root]
+    generated_root = crate_root
+    if crate_root:
+        generated_root = _symlink_for_non_generated_source(ctx, crate_root, package_root)
+        generated_sources.append(generated_root)
+
+    return generated_sources, generated_root
+
+def get_edition(attr, toolchain, label):
+    """Returns the Rust edition from either the current rule's attributes or the current `rust_toolchain`
+
+    Args:
+        attr (struct): The current rule's attributes
+        toolchain (rust_toolchain): The `rust_toolchain` for the current target
+        label (Label): The label of the target being built
+
+    Returns:
+        str: The target Rust edition
+    """
+    if getattr(attr, "edition"):
+        return attr.edition
+    elif not toolchain.default_edition:
+        fail("Attribute `edition` is required for {}.".format(label))
+    else:
+        return toolchain.default_edition
+
+def _symlink_for_non_generated_source(ctx, src_file, package_root):
+    """Creates and returns a symlink for non-generated source files.
+
+    This rule uses the full path to the source files and the rule directory to compute
+    the relative paths. This is needed, instead of using `short_path`, because of non-generated
+    source files in external repositories possibly returning relative paths depending on the
+    current version of Bazel.
+
+    Args:
+        ctx (struct): The current rule's context.
+        src_file (File): The source file.
+        package_root (File): The full path to the directory containing the current rule.
+
+    Returns:
+        File: The created symlink if a non-generated file, or the file itself.
+    """
+
+    if src_file.is_source or src_file.root.path != ctx.bin_dir.path:
+        src_short_path = paths.relativize(src_file.path, src_file.root.path)
+        src_symlink = ctx.actions.declare_file(paths.relativize(src_short_path, package_root))
+        ctx.actions.symlink(
+            output = src_symlink,
+            target_file = src_file,
+            progress_message = "Creating symlink to source file: {}".format(src_file.path),
+        )
+        return src_symlink
+    else:
+        return src_file

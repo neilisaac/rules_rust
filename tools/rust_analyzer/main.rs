@@ -36,20 +36,20 @@ fn main() -> anyhow::Result<()> {
     // Generate the crate specs.
     generate_crate_info(
         &config.bazel,
-        &workspace_root,
-        &rules_rust_name,
+        workspace_root,
+        rules_rust_name,
         &config.targets,
     )?;
 
     // Use the generated files to write rust-project.json.
     write_rust_project(
         &config.bazel,
-        &workspace_root,
+        workspace_root,
         &rules_rust_name,
         &config.targets,
-        &execution_root,
-        &output_base,
-        &workspace_root.join("rust-project.json"),
+        execution_root,
+        output_base,
+        workspace_root.join("rust-project.json"),
     )?;
 
     Ok(())

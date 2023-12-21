@@ -10,8 +10,9 @@ use std::str::FromStr;
 
 use anyhow::{bail, Context as AnyhowContext, Result};
 use indoc::formatdoc;
+use itertools::Itertools;
 
-use crate::config::{RenderConfig, VendorMode};
+use crate::config::{AliasRule, RenderConfig, VendorMode};
 use crate::context::crate_context::{CrateContext, CrateDependency, Rule};
 use crate::context::{Context, TargetAttributes};
 use crate::rendering::template_engine::TemplateEngine;
@@ -21,6 +22,7 @@ use crate::utils::starlark::{
     Package, RustBinary, RustLibrary, RustProcMacro, Select, SelectDict, SelectList, SelectMap,
     Starlark, TargetCompatibleWith,
 };
+use crate::utils::target_triple::TargetTriple;
 use crate::utils::{self, sanitize_repository_name};
 
 // Configuration remapper used to convert from cfg expressions like "cfg(unix)"
@@ -29,22 +31,16 @@ pub(crate) type Platforms = BTreeMap<String, BTreeSet<String>>;
 
 pub struct Renderer {
     config: RenderConfig,
-    supported_platform_triples: BTreeSet<String>,
-    generate_target_compatible_with: bool,
+    supported_platform_triples: BTreeSet<TargetTriple>,
     engine: TemplateEngine,
 }
 
 impl Renderer {
-    pub fn new(
-        config: RenderConfig,
-        supported_platform_triples: BTreeSet<String>,
-        generate_target_compatible_with: bool,
-    ) -> Self {
+    pub fn new(config: RenderConfig, supported_platform_triples: BTreeSet<TargetTriple>) -> Self {
         let engine = TemplateEngine::new(&config);
         Self {
             config,
             supported_platform_triples,
-            generate_target_compatible_with,
             engine,
         }
     }
@@ -74,15 +70,15 @@ impl Renderer {
         context
             .conditions
             .iter()
-            .map(|(cfg, triples)| {
+            .map(|(cfg, target_triples)| {
                 (
                     cfg.clone(),
-                    triples
+                    target_triples
                         .iter()
-                        .map(|triple| {
+                        .map(|target_triple| {
                             render_platform_constraint_label(
                                 &self.config.platforms_template,
-                                triple,
+                                target_triple,
                             )
                         })
                         .collect(),
@@ -101,6 +97,9 @@ impl Renderer {
         let module_build_label =
             render_module_label(&self.config.crates_module_template, "BUILD.bazel")
                 .context("Failed to resolve string to module file label")?;
+        let module_alias_rules_label =
+            render_module_label(&self.config.crates_module_template, "alias_rules.bzl")
+                .context("Failed to resolve string to module file label")?;
 
         let mut map = BTreeMap::new();
         map.insert(
@@ -110,6 +109,14 @@ impl Renderer {
         map.insert(
             Renderer::label_to_path(&module_build_label),
             self.render_module_build_file(context)?,
+        );
+        map.insert(
+            Renderer::label_to_path(&module_alias_rules_label),
+            include_str!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/src/rendering/verbatim/alias_rules.bzl"
+            ))
+            .to_owned(),
         );
 
         Ok(map)
@@ -121,6 +128,23 @@ impl Renderer {
         // Banner comment for top of the file.
         let header = self.engine.render_header()?;
         starlark.push(Starlark::Verbatim(header));
+
+        // Load any `alias_rule`s.
+        let mut loads: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+        for alias_rule in Iterator::chain(
+            std::iter::once(&self.config.default_alias_rule),
+            context
+                .workspace_member_deps()
+                .iter()
+                .flat_map(|dep| &context.crates[&dep.id].alias_rule),
+        ) {
+            if let Some(bzl) = alias_rule.bzl() {
+                loads.entry(bzl).or_default().insert(alias_rule.rule());
+            }
+        }
+        for (bzl, items) in loads {
+            starlark.push(Starlark::Load(Load { bzl, items }))
+        }
 
         // Package visibility, exported bzl files.
         let package = Package::default_visibility_public();
@@ -151,9 +175,15 @@ impl Renderer {
         let mut dependencies = Vec::new();
         for dep in context.workspace_member_deps() {
             let krate = &context.crates[&dep.id];
+            let alias_rule = krate
+                .alias_rule
+                .as_ref()
+                .unwrap_or(&self.config.default_alias_rule);
+
             if let Some(library_target_name) = &krate.library_target_name {
                 let rename = dep.alias.as_ref().unwrap_or(&krate.name);
                 dependencies.push(Alias {
+                    rule: alias_rule.rule(),
                     // If duplicates exist, include version to disambiguate them.
                     name: if context.has_duplicate_workspace_member_dep(dep) {
                         format!("{}-{}", rename, krate.version)
@@ -164,7 +194,30 @@ impl Renderer {
                     tags: BTreeSet::from(["manual".to_owned()]),
                 });
             }
+
+            for (alias, target) in &krate.extra_aliased_targets {
+                dependencies.push(Alias {
+                    rule: alias_rule.rule(),
+                    name: alias.clone(),
+                    actual: self.crate_label(&krate.name, &krate.version, target),
+                    tags: BTreeSet::from(["manual".to_owned()]),
+                });
+            }
         }
+
+        let duplicates: Vec<_> = dependencies
+            .iter()
+            .map(|alias| &alias.name)
+            .duplicates()
+            .sorted()
+            .collect();
+
+        assert!(
+            duplicates.is_empty(),
+            "Found duplicate aliases that must be changed (Check your `extra_aliased_targets`): {:#?}",
+            duplicates
+        );
+
         if !dependencies.is_empty() {
             let comment = "# Workspace Member Dependencies".to_owned();
             starlark.push(Starlark::Verbatim(comment));
@@ -178,6 +231,7 @@ impl Renderer {
             for rule in &krate.targets {
                 if let Rule::Binary(bin) = rule {
                     binaries.push(Alias {
+                        rule: AliasRule::default().rule(),
                         // If duplicates exist, include version to disambiguate them.
                         name: if context.has_duplicate_binary_crate(crate_id) {
                             format!("{}-{}__{}", krate.name, krate.version, bin.crate_name)
@@ -278,6 +332,7 @@ impl Renderer {
                         self.make_cargo_build_script(platforms, krate, target)?;
                     starlark.push(Starlark::CargoBuildScript(cargo_build_script));
                     starlark.push(Starlark::Alias(Alias {
+                        rule: AliasRule::default().rule(),
                         name: target.crate_name.clone(),
                         actual: format!("{}_build_script", krate.name),
                         tags: BTreeSet::from(["manual".to_owned()]),
@@ -350,7 +405,10 @@ impl Renderer {
             ),
             crate_features: SelectList::from(&krate.common_attrs.crate_features)
                 .map_configuration_names(|triple| {
-                    render_platform_constraint_label(&self.config.platforms_template, &triple)
+                    render_platform_constraint_label(
+                        &self.config.platforms_template,
+                        &TargetTriple::from_bazel(triple),
+                    )
                 }),
             crate_name: utils::sanitize_module_name(&target.crate_name),
             crate_root: target.crate_root.clone(),
@@ -362,13 +420,13 @@ impl Renderer {
             deps: self
                 .make_deps(
                     attrs.map_or(&empty_deps, |attrs| &attrs.deps),
-                    attrs.map_or(&empty_set, |attrs| &attrs.extra_deps),
+                    attrs.map_or(&empty_list, |attrs| &attrs.extra_deps),
                 )
                 .remap_configurations(platforms),
             link_deps: self
                 .make_deps(
                     attrs.map_or(&empty_deps, |attrs| &attrs.link_deps),
-                    attrs.map_or(&empty_set, |attrs| &attrs.extra_link_deps),
+                    attrs.map_or(&empty_list, |attrs| &attrs.extra_link_deps),
                 )
                 .remap_configurations(platforms),
             edition: krate.common_attrs.edition.clone(),
@@ -377,9 +435,10 @@ impl Renderer {
             proc_macro_deps: self
                 .make_deps(
                     attrs.map_or(&empty_deps, |attrs| &attrs.proc_macro_deps),
-                    attrs.map_or(&empty_set, |attrs| &attrs.extra_proc_macro_deps),
+                    attrs.map_or(&empty_list, |attrs| &attrs.extra_proc_macro_deps),
                 )
                 .remap_configurations(platforms),
+            rundir: attrs.and_then(|attrs| attrs.rundir.clone()),
             rustc_env: attrs
                 .map_or_else(SelectDict::default, |attrs| attrs.rustc_env.clone())
                 .remap_configurations(platforms),
@@ -507,7 +566,10 @@ impl Renderer {
             ),
             crate_features: SelectList::from(&krate.common_attrs.crate_features)
                 .map_configuration_names(|triple| {
-                    render_platform_constraint_label(&self.config.platforms_template, &triple)
+                    render_platform_constraint_label(
+                        &self.config.platforms_template,
+                        &TargetTriple::from_bazel(triple),
+                    )
                 }),
             crate_root: target.crate_root.clone(),
             data: make_data(
@@ -546,14 +608,14 @@ impl Renderer {
                 tags.insert(format!("crate-name={}", krate.name));
                 tags
             },
-            target_compatible_with: self.generate_target_compatible_with.then(|| {
+            target_compatible_with: self.config.generate_target_compatible_with.then(|| {
                 TargetCompatibleWith::new(
                     self.supported_platform_triples
                         .iter()
-                        .map(|triple| {
+                        .map(|target_triple| {
                             render_platform_constraint_label(
                                 &self.config.platforms_template,
-                                triple,
+                                target_triple,
                             )
                         })
                         .collect(),
@@ -604,14 +666,12 @@ impl Renderer {
     fn make_deps(
         &self,
         deps: &SelectList<CrateDependency>,
-        extra_deps: &BTreeSet<String>,
+        extra_deps: &SelectList<String>,
     ) -> SelectList<String> {
         let mut deps = deps
             .clone()
             .map(|dep| self.crate_label(&dep.id.name, &dep.id.version, &dep.target));
-        for extra_dep in extra_deps {
-            deps.insert(extra_dep.clone(), None);
-        }
+        deps.extend(extra_deps.into_iter());
         deps
     }
 
@@ -725,8 +785,8 @@ pub fn render_module_label(template: &str, name: &str) -> Result<Label> {
 }
 
 /// Render the Bazel label of a platform triple
-fn render_platform_constraint_label(template: &str, triple: &str) -> String {
-    template.replace("{triple}", triple)
+fn render_platform_constraint_label(template: &str, target_triple: &TargetTriple) -> String {
+    template.replace("{triple}", &target_triple.to_bazel())
 }
 
 fn render_build_file_template(template: &str, name: &str, version: &str) -> Result<Label> {
@@ -792,30 +852,30 @@ mod test {
         }
     }
 
-    fn mock_supported_platform_triples() -> BTreeSet<String> {
+    fn mock_supported_platform_triples() -> BTreeSet<TargetTriple> {
         BTreeSet::from([
-            "aarch64-apple-darwin".to_owned(),
-            "aarch64-apple-ios".to_owned(),
-            "aarch64-linux-android".to_owned(),
-            "aarch64-pc-windows-msvc".to_owned(),
-            "aarch64-unknown-linux-gnu".to_owned(),
-            "arm-unknown-linux-gnueabi".to_owned(),
-            "armv7-unknown-linux-gnueabi".to_owned(),
-            "i686-apple-darwin".to_owned(),
-            "i686-linux-android".to_owned(),
-            "i686-pc-windows-msvc".to_owned(),
-            "i686-unknown-freebsd".to_owned(),
-            "i686-unknown-linux-gnu".to_owned(),
-            "powerpc-unknown-linux-gnu".to_owned(),
-            "s390x-unknown-linux-gnu".to_owned(),
-            "wasm32-unknown-unknown".to_owned(),
-            "wasm32-wasi".to_owned(),
-            "x86_64-apple-darwin".to_owned(),
-            "x86_64-apple-ios".to_owned(),
-            "x86_64-linux-android".to_owned(),
-            "x86_64-pc-windows-msvc".to_owned(),
-            "x86_64-unknown-freebsd".to_owned(),
-            "x86_64-unknown-linux-gnu".to_owned(),
+            TargetTriple::from_bazel("aarch64-apple-darwin".to_owned()),
+            TargetTriple::from_bazel("aarch64-apple-ios".to_owned()),
+            TargetTriple::from_bazel("aarch64-linux-android".to_owned()),
+            TargetTriple::from_bazel("aarch64-pc-windows-msvc".to_owned()),
+            TargetTriple::from_bazel("aarch64-unknown-linux-gnu".to_owned()),
+            TargetTriple::from_bazel("arm-unknown-linux-gnueabi".to_owned()),
+            TargetTriple::from_bazel("armv7-unknown-linux-gnueabi".to_owned()),
+            TargetTriple::from_bazel("i686-apple-darwin".to_owned()),
+            TargetTriple::from_bazel("i686-linux-android".to_owned()),
+            TargetTriple::from_bazel("i686-pc-windows-msvc".to_owned()),
+            TargetTriple::from_bazel("i686-unknown-freebsd".to_owned()),
+            TargetTriple::from_bazel("i686-unknown-linux-gnu".to_owned()),
+            TargetTriple::from_bazel("powerpc-unknown-linux-gnu".to_owned()),
+            TargetTriple::from_bazel("s390x-unknown-linux-gnu".to_owned()),
+            TargetTriple::from_bazel("wasm32-unknown-unknown".to_owned()),
+            TargetTriple::from_bazel("wasm32-wasi".to_owned()),
+            TargetTriple::from_bazel("x86_64-apple-darwin".to_owned()),
+            TargetTriple::from_bazel("x86_64-apple-ios".to_owned()),
+            TargetTriple::from_bazel("x86_64-linux-android".to_owned()),
+            TargetTriple::from_bazel("x86_64-pc-windows-msvc".to_owned()),
+            TargetTriple::from_bazel("x86_64-unknown-freebsd".to_owned()),
+            TargetTriple::from_bazel("x86_64-unknown-linux-gnu".to_owned()),
         ])
     }
 
@@ -833,11 +893,7 @@ mod test {
             },
         );
 
-        let renderer = Renderer::new(
-            mock_render_config(None),
-            mock_supported_platform_triples(),
-            true,
-        );
+        let renderer = Renderer::new(mock_render_config(None), mock_supported_platform_triples());
         let output = renderer.render(&context).unwrap();
 
         let build_file_content = output
@@ -864,11 +920,7 @@ mod test {
             },
         );
 
-        let renderer = Renderer::new(
-            mock_render_config(None),
-            mock_supported_platform_triples(),
-            true,
-        );
+        let renderer = Renderer::new(mock_render_config(None), mock_supported_platform_triples());
         let output = renderer.render(&context).unwrap();
 
         let build_file_content = output
@@ -898,11 +950,7 @@ mod test {
             },
         );
 
-        let renderer = Renderer::new(
-            mock_render_config(None),
-            mock_supported_platform_triples(),
-            true,
-        );
+        let renderer = Renderer::new(mock_render_config(None), mock_supported_platform_triples());
         let output = renderer.render(&context).unwrap();
 
         let build_file_content = output
@@ -931,11 +979,7 @@ mod test {
             },
         );
 
-        let renderer = Renderer::new(
-            mock_render_config(None),
-            mock_supported_platform_triples(),
-            true,
-        );
+        let renderer = Renderer::new(mock_render_config(None), mock_supported_platform_triples());
         let output = renderer.render(&context).unwrap();
 
         let build_file_content = output
@@ -961,11 +1005,7 @@ mod test {
             },
         );
 
-        let renderer = Renderer::new(
-            mock_render_config(None),
-            mock_supported_platform_triples(),
-            true,
-        );
+        let renderer = Renderer::new(mock_render_config(None), mock_supported_platform_triples());
         let output = renderer.render(&context).unwrap();
 
         let build_file_content = output
@@ -994,11 +1034,7 @@ mod test {
             },
         );
 
-        let renderer = Renderer::new(
-            mock_render_config(None),
-            mock_supported_platform_triples(),
-            true,
-        );
+        let renderer = Renderer::new(mock_render_config(None), mock_supported_platform_triples());
         let output = renderer.render(&context).unwrap();
 
         let build_file_content = output
@@ -1018,11 +1054,7 @@ mod test {
             Annotations::new(test::metadata::alias(), test::lockfile::alias(), config).unwrap();
         let context = Context::new(annotations).unwrap();
 
-        let renderer = Renderer::new(
-            mock_render_config(None),
-            mock_supported_platform_triples(),
-            true,
-        );
+        let renderer = Renderer::new(mock_render_config(None), mock_supported_platform_triples());
         let output = renderer.render(&context).unwrap();
 
         let build_file_content = output.get(&PathBuf::from("BUILD.bazel")).unwrap();
@@ -1045,11 +1077,7 @@ mod test {
             },
         );
 
-        let renderer = Renderer::new(
-            mock_render_config(None),
-            mock_supported_platform_triples(),
-            true,
-        );
+        let renderer = Renderer::new(mock_render_config(None), mock_supported_platform_triples());
         let output = renderer.render(&context).unwrap();
 
         let defs_module = output.get(&PathBuf::from("defs.bzl")).unwrap();
@@ -1075,7 +1103,6 @@ mod test {
         let renderer = Renderer::new(
             mock_render_config(Some(VendorMode::Remote)),
             mock_supported_platform_triples(),
-            true,
         );
         let output = renderer.render(&context).unwrap();
 
@@ -1104,7 +1131,6 @@ mod test {
         let renderer = Renderer::new(
             mock_render_config(Some(VendorMode::Local)),
             mock_supported_platform_triples(),
-            true,
         );
         let output = renderer.render(&context).unwrap();
 
@@ -1146,7 +1172,6 @@ mod test {
         let renderer = Renderer::new(
             mock_render_config(Some(VendorMode::Local)),
             mock_supported_platform_triples(),
-            true,
         );
         let output = renderer.render(&context).unwrap();
 
@@ -1188,7 +1213,7 @@ mod test {
         let annotations = Annotations::new(metadata, lockfile, config.clone()).unwrap();
         let context = Context::new(annotations).unwrap();
 
-        let renderer = Renderer::new(config.rendering, config.supported_platform_triples, true);
+        let renderer = Renderer::new(config.rendering, config.supported_platform_triples);
         let output = renderer.render(&context).unwrap();
 
         let build_file_content = output
@@ -1237,11 +1262,7 @@ mod test {
             },
         );
 
-        let renderer = Renderer::new(
-            mock_render_config(None),
-            mock_supported_platform_triples(),
-            true,
-        );
+        let renderer = Renderer::new(mock_render_config(None), mock_supported_platform_triples());
         let output = renderer.render(&context).unwrap();
 
         let build_file_content = output
@@ -1276,11 +1297,7 @@ mod test {
             },
         );
 
-        let renderer = Renderer::new(
-            mock_render_config(None),
-            mock_supported_platform_triples(),
-            true,
-        );
+        let renderer = Renderer::new(mock_render_config(None), mock_supported_platform_triples());
         let output = renderer.render(&context).unwrap();
 
         let build_file_content = output

@@ -16,6 +16,7 @@ load(
     "find_cc_toolchain",
     "make_static_lib_symlink",
 )
+load("//rust/settings:incompatible.bzl", "IncompatibleFlagInfo")
 
 rust_analyzer_toolchain = _rust_analyzer_toolchain
 rustfmt_toolchain = _rustfmt_toolchain
@@ -640,6 +641,9 @@ def _rust_toolchain_impl(ctx):
         _pipelined_compilation = pipelined_compilation,
         _experimental_use_cc_common_link = experimental_use_cc_common_link,
         _experimental_use_global_allocator = experimental_use_global_allocator,
+        _experimental_use_coverage_metadata_files = ctx.attr._experimental_use_coverage_metadata_files[BuildSettingInfo].value,
+        _experimental_toolchain_generated_sysroot = ctx.attr._experimental_toolchain_generated_sysroot[IncompatibleFlagInfo].enabled,
+        _incompatible_test_attr_crate_and_srcs_mutually_exclusive = ctx.attr._incompatible_test_attr_crate_and_srcs_mutually_exclusive[IncompatibleFlagInfo].enabled,
         _no_std = no_std,
     )
     return [
@@ -653,6 +657,7 @@ rust_toolchain = rule(
     attrs = {
         "allocator_library": attr.label(
             doc = "Target that provides allocator functions when rust_library targets are embedded in a cc_binary.",
+            default = "@rules_rust//ffi/cc/allocator_library",
         ),
         "binary_ext": attr.string(
             doc = "The extension for binaries created from rustc.",
@@ -708,6 +713,7 @@ rust_toolchain = rule(
         ),
         "global_allocator_library": attr.label(
             doc = "Target that provides allocator functions for when a global allocator is present.",
+            default = "@rules_rust//ffi/cc/global_allocator_library",
         ),
         "llvm_cov": attr.label(
             doc = "The location of the `llvm-cov` binary. Can be a direct source or a filegroup containing one item. If None, rust code is not instrumented for coverage.",
@@ -784,12 +790,25 @@ rust_toolchain = rule(
         "_cc_toolchain": attr.label(
             default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
         ),
+        "_experimental_toolchain_generated_sysroot": attr.label(
+            default = Label("//rust/settings:experimental_toolchain_generated_sysroot"),
+            doc = (
+                "Label to a boolean build setting that lets the rule knows wheter to set --sysroot to rustc" +
+                "This flag is only relevant when used together with --@rules_rust//rust/settings:experimental_toolchain_generated_sysroot."
+            ),
+        ),
+        "_experimental_use_coverage_metadata_files": attr.label(
+            default = Label("//rust/settings:experimental_use_coverage_metadata_files"),
+        ),
         "_experimental_use_global_allocator": attr.label(
             default = Label("//rust/settings:experimental_use_global_allocator"),
             doc = (
                 "Label to a boolean build setting that informs the target build whether a global allocator is being used." +
                 "This flag is only relevant when used together with --@rules_rust//rust/settings:experimental_use_global_allocator."
             ),
+        ),
+        "_incompatible_test_attr_crate_and_srcs_mutually_exclusive": attr.label(
+            default = Label("//rust/settings:incompatible_test_attr_crate_and_srcs_mutually_exclusive"),
         ),
         "_no_std": attr.label(
             default = Label("//:no_std"),

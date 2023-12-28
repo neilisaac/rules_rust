@@ -1,5 +1,7 @@
 """Macros used for represeting crates or annotations for existing crates"""
 
+load(":common_utils.bzl", "parse_alias_rule")
+
 def _workspace_member(version, sha256 = None):
     """Define information for extra workspace members
 
@@ -83,6 +85,7 @@ def _annotation(
         version = "*",
         additive_build_file = None,
         additive_build_file_content = None,
+        alias_rule = None,
         build_script_data = None,
         build_script_tools = None,
         build_script_data_glob = None,
@@ -118,6 +121,8 @@ def _annotation(
         additive_build_file_content (str, optional): Extra contents to write to the bottom of generated BUILD files.
         additive_build_file (str, optional): A file containing extra contents to write to the bottom of
             generated BUILD files.
+        alias_rule (str, optional): Alias rule to use instead of `native.alias()`.  Overrides [render_config](#render_config)'s
+            'default_alias_rule'.
         build_script_data (list, optional): A list of labels to add to a crate's `cargo_build_script::data` attribute.
         build_script_tools (list, optional): A list of labels to add to a crate's `cargo_build_script::tools` attribute.
         build_script_data_glob (list, optional): A list of glob patterns to add to a crate's `cargo_build_script::data`
@@ -134,7 +139,7 @@ def _annotation(
         compile_data (list, optional): A list of labels to add to a crate's `rust_library::compile_data` attribute.
         compile_data_glob (list, optional): A list of glob patterns to add to a crate's `rust_library::compile_data`
             attribute.
-        crate_features (list, optional): A list of strings to add to a crate's `rust_library::crate_features`
+        crate_features (optional): A list of strings to add to a crate's `rust_library::crate_features`
             attribute.
         data (list, optional): A list of labels to add to a crate's `rust_library::data` attribute.
         data_glob (list, optional): A list of glob patterns to add to a crate's `rust_library::data` attribute.
@@ -175,6 +180,7 @@ def _annotation(
         struct(
             additive_build_file = additive_build_file,
             additive_build_file_content = additive_build_file_content,
+            alias_rule = parse_alias_rule(alias_rule),
             build_script_data = build_script_data,
             build_script_tools = build_script_tools,
             build_script_data_glob = build_script_data_glob,
@@ -205,8 +211,24 @@ def _annotation(
         ),
     ))
 
+def _select(common, selects):
+    """A Starlark Select for `crate.annotation()`.
+
+    Args:
+        common: A value that applies to all configurations.
+        selects (dict): A dict of `target_triple` to values.
+
+    Returns:
+        struct: A struct representing the Starlark Select.
+    """
+    return struct(
+        common = common,
+        selects = selects,
+    )
+
 crate = struct(
     spec = _spec,
     annotation = _annotation,
     workspace_member = _workspace_member,
+    select = _select,
 )

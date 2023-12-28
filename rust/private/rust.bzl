@@ -15,7 +15,7 @@
 """Rust rule implementations"""
 
 load("@bazel_skylib//lib:paths.bzl", "paths")
-load("//rust/private:common.bzl", "rust_common")
+load("//rust/private:common.bzl", "COMMON_PROVIDERS", "rust_common")
 load("//rust/private:providers.bzl", "BuildInfo")
 load("//rust/private:rustc.bzl", "rustc_compile_action")
 load(
@@ -249,6 +249,7 @@ def _rust_binary_impl(ctx):
             rustc_env = ctx.attr.rustc_env,
             rustc_env_files = ctx.files.rustc_env_files,
             is_test = False,
+            data = depset(ctx.files.data),
             compile_data = depset(ctx.files.compile_data),
             compile_data_targets = depset(ctx.attr.compile_data),
             owner = ctx.label,
@@ -264,6 +265,22 @@ def _rust_binary_impl(ctx):
     ))
 
     return providers
+
+def get_rust_test_flags(attr):
+    """Determine the desired rustc flags for test targets.
+
+    Args:
+        attr (dict): Attributes of a rule
+
+    Returns:
+        List: A list of test flags
+    """
+    if getattr(attr, "use_libtest_harness", True):
+        rust_flags = ["--test"]
+    else:
+        rust_flags = ["--cfg", "test"]
+
+    return rust_flags
 
 def _rust_test_impl(ctx):
     """The implementation of the `rust_test` rule.
@@ -393,7 +410,7 @@ def _rust_test_impl(ctx):
         attr = ctx.attr,
         toolchain = toolchain,
         crate_info_dict = crate_info_dict,
-        rust_flags = ["--test"] if ctx.attr.use_libtest_harness else ["--cfg", "test"],
+        rust_flags = get_rust_test_flags(ctx.attr),
         skip_expanding_rustc_env = True,
     )
     data = getattr(ctx.attr, "data", [])
@@ -485,6 +502,56 @@ def _stamp_attribute(default_value):
         default = default_value,
         values = [1, 0, -1],
     )
+
+# Internal attributes core to Rustc actions.
+RUSTC_ATTRS = {
+    "_cc_toolchain": attr.label(
+        doc = (
+            "In order to use find_cc_toolchain, your rule has to depend " +
+            "on C++ toolchain. See `@rules_cc//cc:find_cc_toolchain.bzl` " +
+            "docs for details."
+        ),
+        default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
+    ),
+    "_error_format": attr.label(
+        default = Label("//:error_format"),
+    ),
+    "_extra_exec_rustc_flag": attr.label(
+        default = Label("//:extra_exec_rustc_flag"),
+    ),
+    "_extra_exec_rustc_flags": attr.label(
+        default = Label("//:extra_exec_rustc_flags"),
+    ),
+    "_extra_rustc_flag": attr.label(
+        default = Label("//:extra_rustc_flag"),
+    ),
+    "_extra_rustc_flags": attr.label(
+        default = Label("//:extra_rustc_flags"),
+    ),
+    "_import_macro_dep": attr.label(
+        default = Label("//util/import"),
+        cfg = "exec",
+    ),
+    "_is_proc_macro_dep": attr.label(
+        default = Label("//rust/private:is_proc_macro_dep"),
+    ),
+    "_is_proc_macro_dep_enabled": attr.label(
+        default = Label("//rust/private:is_proc_macro_dep_enabled"),
+    ),
+    "_per_crate_rustc_flag": attr.label(
+        default = Label("//:experimental_per_crate_rustc_flag"),
+    ),
+    "_process_wrapper": attr.label(
+        doc = "A process wrapper for running rustc on all platforms.",
+        default = Label("//util/process_wrapper"),
+        executable = True,
+        allow_single_file = True,
+        cfg = "exec",
+    ),
+    "_rustc_output_diagnostics": attr.label(
+        default = Label("//:rustc_output_diagnostics"),
+    ),
+}
 
 _common_attrs = {
     "aliases": attr.label_keyed_string_dict(
@@ -617,62 +684,18 @@ _common_attrs = {
         """),
         allow_files = [".rs"],
     ),
-    "stamp": _stamp_attribute(default_value = 0),
+    "stamp": _stamp_attribute(
+        default_value = 0,
+    ),
     "version": attr.string(
         doc = "A version to inject in the cargo environment variable.",
         default = "0.0.0",
-    ),
-    "_cc_toolchain": attr.label(
-        doc = (
-            "In order to use find_cc_toolchain, your rule has to depend " +
-            "on C++ toolchain. See `@rules_cc//cc:find_cc_toolchain.bzl` " +
-            "docs for details."
-        ),
-        default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
-    ),
-    "_error_format": attr.label(
-        default = Label("//:error_format"),
-    ),
-    "_extra_exec_rustc_flag": attr.label(
-        default = Label("//:extra_exec_rustc_flag"),
-    ),
-    "_extra_exec_rustc_flags": attr.label(
-        default = Label("//:extra_exec_rustc_flags"),
-    ),
-    "_extra_rustc_flag": attr.label(
-        default = Label("//:extra_rustc_flag"),
-    ),
-    "_extra_rustc_flags": attr.label(
-        default = Label("//:extra_rustc_flags"),
-    ),
-    "_import_macro_dep": attr.label(
-        default = Label("//util/import"),
-        cfg = "exec",
-    ),
-    "_is_proc_macro_dep": attr.label(
-        default = Label("//rust/private:is_proc_macro_dep"),
-    ),
-    "_is_proc_macro_dep_enabled": attr.label(
-        default = Label("//rust/private:is_proc_macro_dep_enabled"),
-    ),
-    "_per_crate_rustc_flag": attr.label(
-        default = Label("//:experimental_per_crate_rustc_flag"),
-    ),
-    "_process_wrapper": attr.label(
-        doc = "A process wrapper for running rustc on all platforms.",
-        default = Label("//util/process_wrapper"),
-        executable = True,
-        allow_single_file = True,
-        cfg = "exec",
-    ),
-    "_rustc_output_diagnostics": attr.label(
-        default = Label("//:rustc_output_diagnostics"),
     ),
     "_stamp_flag": attr.label(
         doc = "A setting used to determine whether or not the `--stamp` flag is enabled",
         default = Label("//rust/private:stamp"),
     ),
-}
+} | RUSTC_ATTRS
 
 _coverage_attrs = {
     "_collect_cc_coverage": attr.label(
@@ -760,15 +783,9 @@ _rust_test_attrs = dict({
     "_use_grep_includes": attr.bool(default = True),
 }.items() + _coverage_attrs.items() + _experimental_use_cc_common_link_attrs.items())
 
-_common_providers = [
-    rust_common.crate_info,
-    rust_common.dep_info,
-    DefaultInfo,
-]
-
 rust_library = rule(
     implementation = _rust_library_impl,
-    provides = _common_providers,
+    provides = COMMON_PROVIDERS,
     attrs = dict(_common_attrs.items() + {
         "disable_pipelining": attr.bool(
             default = False,
@@ -961,14 +978,16 @@ _proc_macro_dep_transition = transition(
 
 rust_proc_macro = rule(
     implementation = _rust_proc_macro_impl,
-    provides = _common_providers,
+    provides = COMMON_PROVIDERS,
     # Start by copying the common attributes, then override the `deps` attribute
     # to apply `_proc_macro_dep_transition`. To add this transition we additionally
     # need to declare `_allowlist_function_transition`, see
     # https://docs.bazel.build/versions/main/skylark/config.html#user-defined-transitions.
     attrs = dict(
         _common_attrs.items(),
-        _allowlist_function_transition = attr.label(default = Label("//tools/allowlists/function_transition_allowlist")),
+        _allowlist_function_transition = attr.label(
+            default = Label("//tools/allowlists/function_transition_allowlist"),
+        ),
         deps = attr.label_list(
             doc = dedent("""\
                 List of other libraries to be linked to this library target.
@@ -1048,7 +1067,7 @@ _rust_binary_transition = transition(
 
 rust_binary = rule(
     implementation = _rust_binary_impl,
-    provides = _common_providers,
+    provides = COMMON_PROVIDERS,
     attrs = dict(_common_attrs.items() + _rust_binary_attrs.items() + {
         "platform": attr.label(
             doc = "Optional platform to transition the binary to.",
@@ -1192,7 +1211,7 @@ def _common_attrs_for_binary_without_process_wrapper(attrs):
 # setting it to None, which the functions in rustc detect and build accordingly.
 rust_binary_without_process_wrapper = rule(
     implementation = _rust_binary_impl,
-    provides = _common_providers,
+    provides = COMMON_PROVIDERS,
     attrs = _common_attrs_for_binary_without_process_wrapper(_common_attrs.items() + _rust_binary_attrs.items() + {
         "platform": attr.label(
             doc = "Optional platform to transition the binary to.",
@@ -1215,7 +1234,7 @@ rust_binary_without_process_wrapper = rule(
 
 rust_library_without_process_wrapper = rule(
     implementation = _rust_library_impl,
-    provides = _common_providers,
+    provides = COMMON_PROVIDERS,
     attrs = dict(_common_attrs_for_binary_without_process_wrapper(_common_attrs).items()),
     fragments = ["cpp"],
     host_fragments = ["cpp"],
@@ -1243,7 +1262,7 @@ _rust_test_transition = transition(
 
 rust_test = rule(
     implementation = _rust_test_impl,
-    provides = _common_providers,
+    provides = COMMON_PROVIDERS,
     attrs = dict(_common_attrs.items() + _rust_test_attrs.items() + {
         "platform": attr.label(
             doc = "Optional platform to transition the test to.",

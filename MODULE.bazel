@@ -2,10 +2,8 @@
 
 module(
     name = "rules_rust",
-    version = "0.33.0",
+    version = "0.35.0",
 )
-
-print("WARNING: The rules_rust Bazel module is still highly experimental and subject to change at any time. Only use it to try out bzlmod for now.")  # buildifier: disable=print
 
 bazel_dep(
     name = "bazel_skylib",
@@ -77,8 +75,8 @@ use_repo(
     "rrra__log-0.4.19",
     "rrra__serde-1.0.171",
     "rrra__serde_json-1.0.102",
-    "rules_rust_bindgen__bindgen-0.65.1",
-    "rules_rust_bindgen__bindgen-cli-0.65.1",
+    "rules_rust_bindgen__bindgen-0.69.1",
+    "rules_rust_bindgen__bindgen-cli-0.69.1",
     "rules_rust_bindgen__clang-sys-1.6.1",
     "rules_rust_bindgen__clap-4.3.3",
     "rules_rust_bindgen__clap_complete-4.3.1",
@@ -126,16 +124,11 @@ use_repo(
 )
 
 rust = use_extension("//rust:extensions.bzl", "rust")
-
-# Allow us to run, for example, "bazel build //tools/runfiles" with bzlmod.
-# Register it as a dev dependency so that we don't force this toolchain on
-# downstream users.
 rust.toolchain(edition = "2021")
 use_repo(rust, "rust_toolchains")
 
 register_toolchains(
     "@rust_toolchains//:all",
-    dev_dependency = True,
 )
 
 use_repo(rust, "rust_host_tools")
